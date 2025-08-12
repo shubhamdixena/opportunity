@@ -1,14 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
-import { Button } from "../ui/button"
-import { Input } from "../ui/input"
-import { Textarea } from "../ui/textarea"
-import { Switch } from "../ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
-import { Badge } from "../ui/badge"
-import { Separator } from "../ui/separator"
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { Button } from "./ui/button"
+import { Input } from "./ui/input"
+import { Textarea } from "./ui/textarea"
+import { Switch } from "./ui/switch"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
+import { Badge } from "./ui/badge"
+import { Separator } from "./ui/separator"
 import {
   Settings,
   Globe,

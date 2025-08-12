@@ -1,8 +1,8 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
-import { Button } from "../ui/button"
-import type { Opportunity } from "../OpportunityCard"
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { Button } from "./ui/button"
+import type { Opportunity } from "./OpportunityCard"
 import { TrendingUp, Users, Briefcase, Calendar, Plus, ArrowRight, AlertCircle } from "lucide-react"
 import { useMemo } from "react"
 
