@@ -55,7 +55,14 @@ export function Navigation({
             <nav className="hidden md:flex items-center space-x-6">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant={isBrowseActive ? "secondary" : "ghost"} className="text-sm">
+                  <Button
+                    variant={isBrowseActive ? "secondary" : "ghost"}
+                    className={`text-sm ${
+                      isBrowseActive
+                        ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        : "hover:bg-accent hover:text-accent-foreground"
+                    } h-10 px-4 py-2`}
+                  >
                     Browse
                     <ChevronDown className="ml-1 w-4 h-4" />
                   </Button>
@@ -101,10 +108,11 @@ export function Navigation({
             )}
 
             <div className="hidden md:flex items-center space-x-2">
-              <Button variant="ghost" size="sm">
-                Log In
-              </Button>
-              <Button size="sm">Sign Up</Button>
+              <Link href="/auth">
+                <Button variant="ghost" size="sm">
+                  Log In
+                </Button>
+              </Link>
               <Link href="/admin">
                 <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-800">
                   <Settings className="h-4 w-4" />
@@ -160,10 +168,11 @@ export function Navigation({
             </div>
 
             <div className="flex flex-col space-y-2 mb-4">
-              <Button variant="ghost" size="sm" className="justify-start">
-                Log In
-              </Button>
-              <Button size="sm">Sign Up</Button>
+              <Link href="/auth">
+                <Button variant="ghost" size="sm" className="justify-start">
+                  Log In
+                </Button>
+              </Link>
               <Link href="/admin">
                 <Button variant="ghost" size="sm" className="justify-start text-slate-600 hover:text-slate-800">
                   <Settings className="h-4 w-4 mr-2" />
