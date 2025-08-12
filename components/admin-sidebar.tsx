@@ -1,6 +1,7 @@
 "use client"
 
 import { Home, Briefcase, Users, BarChart3, Settings, Shield } from "lucide-react"
+import Link from "next/link"
 import {
   Sidebar,
   SidebarContent,
@@ -47,23 +48,23 @@ const menuItems = [
 
 export function AdminSidebar({ currentPage, onPageChange }: AdminSidebarProps) {
   return (
-    <Sidebar className="border-r border-sidebar-border bg-sidebar flex-shrink-0">
-      <SidebarHeader className="border-b border-sidebar-border p-4">
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center justify-center w-8 h-8 bg-sidebar-primary rounded-lg">
-            <Shield className="w-4 h-4 text-sidebar-primary-foreground" />
+    <Sidebar className="border-r border-slate-200/60 bg-gradient-to-b from-slate-50 to-white shadow-sm flex-shrink-0 w-64 h-screen flex flex-col">
+      <SidebarHeader className="border-b border-slate-200/60 p-6 bg-white/80 backdrop-blur-sm flex-shrink-0">
+        <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+          <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-800 rounded-xl shadow-md">
+            <Shield className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg text-sidebar-foreground">Admin</h2>
-            <p className="text-sm text-sidebar-foreground/60">OpportunityHub</p>
+            <h2 className="text-lg font-semibold text-slate-800">Admin</h2>
+            <p className="text-sm text-slate-500">OpportunityHub</p>
           </div>
-        </div>
+        </Link>
       </SidebarHeader>
 
-      <SidebarContent className="p-4">
-        <SidebarGroup>
+      <SidebarContent className="p-4 flex-1 flex flex-col">
+        <SidebarGroup className="flex-1">
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
+            <SidebarMenu className="space-y-2">
               {menuItems.map((item) => {
                 const isActive = currentPage === item.id
                 return (
@@ -71,16 +72,21 @@ export function AdminSidebar({ currentPage, onPageChange }: AdminSidebarProps) {
                     <SidebarMenuButton
                       onClick={() => onPageChange(item.id)}
                       className={`
-                        w-full justify-start px-3 py-2 rounded-md transition-colors
+                        w-full justify-start px-4 py-3 rounded-xl transition-all duration-200 group
                         ${
                           isActive
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                            ? "bg-gradient-to-r from-slate-100 to-slate-50 text-slate-800 shadow-sm border border-slate-200/60"
+                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-800 hover:shadow-sm"
                         }
                       `}
                     >
-                      <item.icon className="w-4 h-4 mr-3" />
-                      <span className="text-sm truncate">{item.title}</span>
+                      <item.icon
+                        className={`w-5 h-5 mr-3 transition-colors ${
+                          isActive ? "text-slate-700" : "text-slate-500 group-hover:text-slate-600"
+                        }`}
+                      />
+                      <span className="text-sm font-medium truncate">{item.title}</span>
+                      {isActive && <div className="ml-auto w-2 h-2 bg-slate-600 rounded-full"></div>}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )
