@@ -47,8 +47,8 @@ const menuItems = [
 
 export function AdminSidebar({ currentPage, onPageChange }: AdminSidebarProps) {
   return (
-    <Sidebar className="border-r border-sidebar-border bg-sidebar">
-      <SidebarHeader className="border-b border-sidebar-border p-6">
+    <Sidebar className="border-r border-sidebar-border bg-sidebar flex-shrink-0">
+      <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center space-x-3">
           <div className="flex items-center justify-center w-8 h-8 bg-sidebar-primary rounded-lg">
             <Shield className="w-4 h-4 text-sidebar-primary-foreground" />
@@ -80,7 +80,7 @@ export function AdminSidebar({ currentPage, onPageChange }: AdminSidebarProps) {
                       `}
                     >
                       <item.icon className="w-4 h-4 mr-3" />
-                      <span className="text-sm">{item.title}</span>
+                      <span className="text-sm truncate">{item.title}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )
