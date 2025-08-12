@@ -1,9 +1,9 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
-import { Badge } from "../ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs"
-import type { Opportunity } from "../OpportunityCard"
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { Badge } from "./ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
+import type { Opportunity } from "./OpportunityCard"
 import { TrendingUp, Users, Eye, Target, Award, Globe } from "lucide-react"
 import { useMemo } from "react"
 
