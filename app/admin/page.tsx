@@ -144,8 +144,9 @@ export default function AdminPage() {
           <CardTitle className="text-lg font-semibold text-slate-800">Recent Opportunities</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
               <TableRow className="border-slate-200/60">
                 <TableHead className="font-medium text-slate-700">Opportunity</TableHead>
                 <TableHead className="font-medium text-slate-700">Type</TableHead>
@@ -154,15 +155,15 @@ export default function AdminPage() {
                 <TableHead className="font-medium text-slate-700">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {opportunities.slice(0, 3).map((opportunity) => (
-                <TableRow key={opportunity.id} className="border-slate-200/60">
-                  <TableCell>
-                    <div>
-                      <p className="font-medium text-slate-800 text-sm">{opportunity.title}</p>
-                      <p className="text-xs text-slate-500">{opportunity.organization}</p>
-                    </div>
-                  </TableCell>
+              <TableBody>
+                {opportunities.slice(0, 3).map((opportunity) => (
+                  <TableRow key={opportunity.id} className="border-slate-200/60">
+                    <TableCell>
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-800 text-sm truncate">{opportunity.title}</p>
+                        <p className="text-xs text-slate-500 truncate">{opportunity.organization}</p>
+                      </div>
+                    </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="border-slate-200 text-slate-600 text-xs">
                       {opportunity.type}
@@ -190,10 +191,11 @@ export default function AdminPage() {
                       </Button>
                     </div>
                   </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

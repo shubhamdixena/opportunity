@@ -31,7 +31,7 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
     .slice(0, 3)
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl mb-2">Dashboard</h1>

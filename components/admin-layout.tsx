@@ -31,12 +31,15 @@ interface AdminHeaderProps {
 
 export function AdminHeader({ title, description, buttonText, onButtonClick }: AdminHeaderProps) {
   return (
-    <div className="flex items-center justify-between mb-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-800">{title}</h1>
-        <p className="text-slate-600 mt-1">{description}</p>
+    <div className="flex items-center justify-between gap-4 mb-6">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-semibold text-slate-800 truncate">{title}</h1>
+        <p className="text-slate-600 mt-1 text-sm truncate">{description}</p>
       </div>
-      <Button className="bg-slate-800 hover:bg-slate-700 text-white rounded-lg px-4" onClick={onButtonClick}>
+      <Button
+        className="bg-slate-800 hover:bg-slate-700 text-white rounded-lg px-4 py-2"
+        onClick={onButtonClick}
+      >
         <Plus className="h-4 w-4 mr-2" />
         {buttonText}
       </Button>
