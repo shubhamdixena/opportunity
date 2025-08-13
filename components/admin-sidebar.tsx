@@ -2,6 +2,7 @@
 
 import { Home, Briefcase, Users, BarChart3, Settings, Shield, Bot } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import {
   Sidebar,
   SidebarContent,
@@ -13,45 +14,48 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar"
 
-interface AdminSidebarProps {
-  currentPage: string
-  onPageChange: (page: string) => void
-}
-
 const menuItems = [
   {
     id: "dashboard",
     title: "Dashboard",
     icon: Home,
+    href: "/admin",
   },
   {
     id: "opportunities",
     title: "Opportunities",
     icon: Briefcase,
+    href: "/admin/opportunities",
   },
   {
     id: "content-manager",
     title: "Content Manager",
     icon: Bot,
+    href: "/admin/content-manager",
   },
   {
     id: "users",
     title: "Users",
     icon: Users,
+    href: "/admin/users",
   },
   {
     id: "analytics",
     title: "Analytics",
     icon: BarChart3,
+    href: "/admin/analytics",
   },
   {
     id: "settings",
     title: "Settings",
     icon: Settings,
+    href: "/admin/settings",
   },
 ]
 
-export function AdminSidebar({ currentPage, onPageChange }: AdminSidebarProps) {
+export function AdminSidebar() {
+  const pathname = usePathname()
+
   return (
     <Sidebar className="border-r border-slate-200/60 bg-gradient-to-b from-slate-50 to-white shadow-sm flex-shrink-0 w-64 h-screen flex flex-col">
       <SidebarHeader className="border-b border-slate-200/60 p-6 bg-white/80 backdrop-blur-sm flex-shrink-0">
@@ -71,13 +75,13 @@ export function AdminSidebar({ currentPage, onPageChange }: AdminSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2">
               {menuItems.map((item) => {
-                const isActive = currentPage === item.id
+                const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
                 return (
                   <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      onClick={() => onPageChange(item.id)}
+                    <Link
+                      href={item.href}
                       className={`
-                        w-full justify-start px-4 py-3 rounded-xl transition-all duration-200 group
+                        flex w-full justify-start px-4 py-3 rounded-xl transition-all duration-200 group
                         ${
                           isActive
                             ? "bg-gradient-to-r from-slate-100 to-slate-50 text-slate-800 shadow-sm border border-slate-200/60"
@@ -92,7 +96,7 @@ export function AdminSidebar({ currentPage, onPageChange }: AdminSidebarProps) {
                       />
                       <span className="text-sm font-medium truncate">{item.title}</span>
                       {isActive && <div className="ml-auto w-2 h-2 bg-slate-600 rounded-full"></div>}
-                    </SidebarMenuButton>
+                    </Link>
                   </SidebarMenuItem>
                 )
               })}
