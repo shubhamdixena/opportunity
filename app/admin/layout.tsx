@@ -9,6 +9,7 @@ import { AdminOpportunities } from "../../components/admin-opportunities"
 import { AdminUsers } from "../../components/admin-users"
 import { AdminAnalytics } from "../../components/admin-analytics"
 import { AdminSettings } from "../../components/admin-settings"
+import { AdminContentManager } from "../../components/admin-content-manager"
 import { SidebarProvider } from "../../components/ui/sidebar"
 
 // Mock data for opportunities
@@ -76,6 +77,8 @@ export default function AdminLayout({
             onSearchChange={setSearchQuery}
           />
         )
+      case "content-manager":
+        return <AdminContentManager />
       case "users":
         return <AdminUsers />
       case "analytics":

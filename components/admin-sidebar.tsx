@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Briefcase, Users, BarChart3, Settings, Shield } from "lucide-react"
+import { Home, Briefcase, Users, BarChart3, Settings, Shield, Bot } from "lucide-react"
 import Link from "next/link"
 import {
   Sidebar,
@@ -28,6 +28,11 @@ const menuItems = [
     id: "opportunities",
     title: "Opportunities",
     icon: Briefcase,
+  },
+  {
+    id: "content-manager",
+    title: "Content Manager",
+    icon: Bot,
   },
   {
     id: "users",
