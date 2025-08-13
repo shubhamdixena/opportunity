@@ -69,7 +69,7 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
           }
         }
         .animated-gradient {
-          background: linear-gradient(-45deg, #030213, #4f46e5, #7c3aed, #db2777, #dc2626, #030213);
+          background: linear-gradient(-45deg, #000000, #374151, #6b7280, #9ca3af, #d1d5db, #000000);
           background-size: 400% 400%;
           animation: gradient-x 6s ease infinite;
           -webkit-background-clip: text;
