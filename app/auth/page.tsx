@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useActionState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useActionState } from "react"
 import { useFormStatus } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,13 +33,6 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("signin")
   const [signInState, signInAction] = useActionState(signIn, null)
   const [signUpState, signUpAction] = useActionState(signUp, null)
-  const router = useRouter()
-
-  useEffect(() => {
-    if (signInState?.success) {
-      router.push("/admin")
-    }
-  }, [signInState?.success, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
