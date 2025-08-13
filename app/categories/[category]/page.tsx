@@ -98,19 +98,14 @@ const categoryData = {
   },
 }
 
-export default function CategoryPage({ params }: { params: { category: string } }) {
-  const category = categoryData[params.category as keyof typeof categoryData]
+export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
+  const resolvedParams = await params
+  const category = categoryData[resolvedParams.category as keyof typeof categoryData]
 
   if (!category) {
     return (
-      <div className="min-h-screen bg-white">
-        <Navigation
-          currentPage="categories"
-          onPageChange={() => {}}
-          showSearch={false}
-          searchQuery=""
-          onSearchChange={() => {}}
-        />
+            <div className="min-h-screen bg-white">
+        <Navigation currentPage="categories" showSearch={false} />
         <div className="max-w-4xl mx-auto px-4 py-12 text-center">
           <h1 className="text-2xl font-medium text-gray-900 mb-4">Category not found</h1>
           <Link href="/categories">
@@ -122,14 +117,8 @@ export default function CategoryPage({ params }: { params: { category: string } 
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <Navigation
-        currentPage="categories"
-        onPageChange={() => {}}
-        showSearch={false}
-        searchQuery=""
-        onSearchChange={() => {}}
-      />
+        <div className="min-h-screen bg-white">
+      <Navigation currentPage="categories" showSearch={false} />
 
       <div className="max-w-4xl mx-auto px-4 py-12">
         <Link

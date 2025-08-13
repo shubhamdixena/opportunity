@@ -2,13 +2,12 @@ import { MapPin, Calendar, Globe, Award, CheckCircle, Users, TrendingUp, ArrowLe
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Navigation } from "@/components/navigation"
-import { createClient } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
 async function getOpportunity(id: string) {
   try {
+    const supabase = await createClient()
     const { data: opportunity, error } = await supabase.from("opportunities").select("*").eq("id", id).single()
 
     if (error) {
@@ -23,8 +22,9 @@ async function getOpportunity(id: string) {
   }
 }
 
-export default async function OpportunityPage({ params }: { params: { id: string } }) {
-  const opportunity = await getOpportunity(params.id)
+export default async function OpportunityPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
+  const opportunity = await getOpportunity(resolvedParams.id)
 
   if (!opportunity) {
     notFound()
@@ -58,13 +58,7 @@ export default async function OpportunityPage({ params }: { params: { id: string
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <Navigation
-        currentPage="opportunity-detail"
-        onPageChange={() => {}}
-        showSearch={false}
-        searchQuery=""
-        onSearchChange={() => {}}
-      />
+      <Navigation currentPage="opportunity-detail" showSearch={false} />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24">
         <Link
@@ -122,8 +116,8 @@ export default async function OpportunityPage({ params }: { params: { id: string
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-          <div className="lg:col-span-2 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+          <div className="md:col-span-2 space-y-8">
             {opportunity.about_opportunity && (
               <div className="glass-card p-6 sm:p-8">
                 <h2 className="text-xl sm:text-2xl font-medium text-slate-800 mb-6 flex items-center gap-3">

@@ -5,14 +5,32 @@ import { Button } from "./ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
 import { Badge } from "./ui/badge"
 import { OpportunityCard, type Opportunity } from "./opportunity-card"
+import { useRouter } from "next/navigation"
 
 interface HomePageProps {
-  onPageChange: (page: string) => void
+  onPageChange?: (page: string) => void
   featuredOpportunities: Opportunity[]
-  onOpportunityClick: (opportunity: Opportunity) => void
+  onOpportunityClick?: (opportunity: Opportunity) => void
 }
 
 export function HomePage({ onPageChange, featuredOpportunities, onOpportunityClick }: HomePageProps) {
+  const router = useRouter()
+
+  const handlePageChange = (page: string) => {
+    if (onPageChange) {
+      onPageChange(page)
+    } else {
+      router.push(`/categories/${page}`)
+    }
+  }
+
+  const handleOpportunityClick = (opportunity: Opportunity) => {
+    if (onOpportunityClick) {
+      onOpportunityClick(opportunity)
+    } else {
+      router.push(`/opportunity/${opportunity.id}`)
+    }
+  }
   const categories = [
     {
       id: "scholarships",
@@ -107,7 +125,7 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" className="px-6 py-4 text-base h-auto" onClick={() => onPageChange("scholarships")}>
+              <Button size="lg" className="px-6 py-4 text-base h-auto" onClick={() => handlePageChange("scholarships")}>
                 Explore Opportunities
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -116,7 +134,7 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
                 variant="outline"
                 size="lg"
                 className="px-6 py-4 text-base h-auto bg-transparent"
-                onClick={() => onPageChange("about")}
+                onClick={() => handlePageChange("about")}
               >
                 Learn More
               </Button>
@@ -143,7 +161,7 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
               <Card
                 key={category.id}
                 className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 bg-gradient-to-br ${category.gradient} ${category.border} border`}
-                onClick={() => onPageChange(category.id)}
+                onClick={() => handlePageChange(category.id)}
               >
                 <CardHeader className="text-center pb-2">
                   <CardTitle className="text-xl mb-2">{category.title}</CardTitle>
@@ -167,7 +185,7 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
               <p className="text-xl text-muted-foreground">Hand-picked opportunities with approaching deadlines</p>
             </div>
 
-            <Button variant="outline" onClick={() => onPageChange("scholarships")} className="hidden md:flex">
+            <Button variant="outline" onClick={() => handlePageChange("scholarships")} className="hidden md:flex">
               View All
               <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
@@ -175,14 +193,14 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {featuredOpportunities.slice(0, 3).map((opportunity) => (
-              <div key={opportunity.id} onClick={() => onOpportunityClick(opportunity)} className="cursor-pointer">
+              <div key={opportunity.id} onClick={() => handleOpportunityClick(opportunity)} className="cursor-pointer">
                 <OpportunityCard opportunity={opportunity} />
               </div>
             ))}
           </div>
 
           <div className="text-center md:hidden">
-            <Button variant="outline" onClick={() => onPageChange("scholarships")}>
+            <Button variant="outline" onClick={() => handlePageChange("scholarships")}>
               View All Opportunities
               <ArrowRight className="ml-2 w-4 h-4" />
             </Button>
@@ -248,7 +266,7 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
           </div>
 
           <div className="text-center mt-12">
-            <Button size="lg" onClick={() => onPageChange("scholarships")}>
+            <Button size="lg" onClick={() => handlePageChange("scholarships")}>
               View All Opportunities
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
@@ -265,7 +283,7 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="px-8 py-6 text-lg h-auto" onClick={() => onPageChange("scholarships")}>
+            <Button size="lg" className="px-8 py-6 text-lg h-auto" onClick={() => handlePageChange("scholarships")}>
               Start Exploring
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
@@ -274,7 +292,7 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
               variant="outline"
               size="lg"
               className="px-8 py-6 text-lg h-auto bg-transparent"
-              onClick={() => onPageChange("about")}
+              onClick={() => handlePageChange("about")}
             >
               Learn More
             </Button>

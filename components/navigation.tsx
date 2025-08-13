@@ -6,23 +6,53 @@ import { Button } from "./ui/button"
 import { useState } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface NavigationProps {
   currentPage: string
-  onPageChange: (page: string) => void
-  searchQuery: string
-  onSearchChange: (query: string) => void
+  onPageChange?: (page: string) => void
+  searchQuery?: string
+  onSearchChange?: (query: string) => void
   showSearch?: boolean
 }
 
 export function Navigation({
   currentPage,
   onPageChange,
-  searchQuery,
+  searchQuery = "",
   onSearchChange,
   showSearch = false,
 }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const router = useRouter()
+
+  const handlePageChange = (page: string) => {
+    if (onPageChange) {
+      onPageChange(page)
+    } else {
+      // Default navigation behavior using Next.js router
+      switch (page) {
+        case "home":
+          router.push("/")
+          break
+        case "scholarships":
+        case "fellowships":
+        case "grants":
+        case "conferences":
+        case "competitions":
+          router.push(`/categories/${page}`)
+          break
+        default:
+          router.push(`/${page}`)
+      }
+    }
+  }
+
+  const handleSearchChange = (query: string) => {
+    if (onSearchChange) {
+      onSearchChange(query)
+    }
+  }
 
   const categories = [
     {
@@ -46,7 +76,7 @@ export function Navigation({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-8">
             <button
-              onClick={() => onPageChange("home")}
+              onClick={() => handlePageChange("home")}
               className="text-xl font-medium text-foreground hover:opacity-80 transition-opacity"
             >
               Opportunity for you
@@ -54,7 +84,7 @@ export function Navigation({
 
             <nav className="hidden md:flex items-center space-x-6">
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger>
                   <Button
                     variant={isBrowseActive ? "secondary" : "ghost"}
                     className={`text-sm ${
@@ -71,7 +101,7 @@ export function Navigation({
                   {categories.map((category) => (
                     <DropdownMenuItem
                       key={category.id}
-                      onClick={() => onPageChange(category.id)}
+                      onClick={() => handlePageChange(category.id)}
                       className="flex flex-col items-start p-3 cursor-pointer"
                     >
                       <div className="font-medium text-sm">{category.label}</div>
@@ -86,7 +116,7 @@ export function Navigation({
                   key={item.id}
                   variant={currentPage === item.id ? "secondary" : "ghost"}
                   className="text-sm"
-                  onClick={() => onPageChange(item.id)}
+                  onClick={() => handlePageChange(item.id)}
                 >
                   {item.label}
                 </Button>
@@ -101,7 +131,7 @@ export function Navigation({
                 <Input
                   placeholder="Search opportunities..."
                   value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10 w-64"
                 />
               </div>
@@ -142,7 +172,7 @@ export function Navigation({
                   variant={currentPage === category.id ? "secondary" : "ghost"}
                   className="justify-start"
                   onClick={() => {
-                    onPageChange(category.id)
+                    handlePageChange(category.id)
                     setIsMobileMenuOpen(false)
                   }}
                 >
@@ -158,7 +188,7 @@ export function Navigation({
                   variant={currentPage === item.id ? "secondary" : "ghost"}
                   className="justify-start"
                   onClick={() => {
-                    onPageChange(item.id)
+                    handlePageChange(item.id)
                     setIsMobileMenuOpen(false)
                   }}
                 >
@@ -187,7 +217,7 @@ export function Navigation({
                 <Input
                   placeholder="Search opportunities..."
                   value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10 w-full"
                 />
               </div>

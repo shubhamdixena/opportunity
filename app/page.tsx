@@ -46,14 +46,8 @@ export default async function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation
-        currentPage="home"
-        onPageChange={() => {}}
-        searchQuery=""
-        onSearchChange={() => {}}
-        showSearch={false}
-      />
-      <HomePage onPageChange={() => {}} featuredOpportunities={opportunities} onOpportunityClick={() => {}} />
+      <Navigation currentPage="home" showSearch={false} />
+      <HomePage featuredOpportunities={opportunities} />
     </div>
   )
 }
