@@ -36,7 +36,7 @@ export function Navigation({
     { id: "competitions", label: "Competitions", description: "Academic and professional competitions with prizes" },
   ]
 
-  const navItems = [{ id: "dashboard", label: "My Dashboard" }]
+  const navItems: { id: string; label: string }[] = []
 
   const isBrowseActive = ["scholarships", "fellowships", "grants", "conferences", "competitions"].includes(currentPage)
 
