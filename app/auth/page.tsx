@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useActionState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useFormStatus } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2, Shield } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { signIn, signUp } from "@/lib/actions"
 
 function SubmitButton({ isSignUp }: { isSignUp: boolean }) {
@@ -31,17 +31,16 @@ function SubmitButton({ isSignUp }: { isSignUp: boolean }) {
 }
 
 export default function AuthPage() {
-  const router = useRouter()
   const [activeTab, setActiveTab] = useState("signin")
   const [signInState, signInAction] = useActionState(signIn, null)
   const [signUpState, signUpAction] = useActionState(signUp, null)
+  const router = useRouter()
 
-  // Handle successful login by redirecting to admin
   useEffect(() => {
     if (signInState?.success) {
       router.push("/admin")
     }
-  }, [signInState, router])
+  }, [signInState?.success, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
