@@ -7,12 +7,14 @@ import { Badge } from "./ui/badge"
 import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 import { ScrollArea } from "./ui/scroll-area"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import type { Opportunity } from "./OpportunityCard"
 import { Plus, Edit, Trash2, Star, MapPin, ExternalLink, MoreHorizontal } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import Link from "next/link"
 
 interface AdminOpportunitiesProps {
   opportunities: Opportunity[]
@@ -32,6 +34,16 @@ interface OpportunityForm {
   tags: string
   url: string
   featured: boolean
+  aboutOpportunity: string
+  requirements: string
+  howToApply: string
+  whatYouGet: string
+  programStartDate: string
+  programEndDate: string
+  contactEmail: string
+  eligibilityAge: string
+  teamSize: string
+  languageRequirements: string
 }
 
 const initialForm: OpportunityForm = {
@@ -45,6 +57,16 @@ const initialForm: OpportunityForm = {
   tags: "",
   url: "",
   featured: false,
+  aboutOpportunity: "",
+  requirements: "",
+  howToApply: "",
+  whatYouGet: "",
+  programStartDate: "",
+  programEndDate: "",
+  contactEmail: "",
+  eligibilityAge: "",
+  teamSize: "",
+  languageRequirements: "",
 }
 
 export function AdminOpportunities({
@@ -53,13 +75,11 @@ export function AdminOpportunities({
   searchQuery,
   onSearchChange,
 }: AdminOpportunitiesProps) {
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null)
   const [formData, setFormData] = useState<OpportunityForm>(initialForm)
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
 
-  // Filter and search opportunities
   const filteredOpportunities = useMemo(() => {
     return opportunities.filter((opp) => {
       const matchesSearch =
@@ -74,29 +94,6 @@ export function AdminOpportunities({
   }, [opportunities, searchQuery, categoryFilter])
 
   const categories = ["Scholarships", "Fellowships", "Grants", "Conferences", "Competitions"]
-
-  const handleAddOpportunity = () => {
-    const newOpportunity: Opportunity = {
-      id: Date.now().toString(),
-      title: formData.title,
-      organization: formData.organization,
-      description: formData.description,
-      category: formData.category,
-      location: formData.location,
-      deadline: formData.deadline,
-      amount: formData.amount || undefined,
-      tags: formData.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-      url: formData.url,
-      featured: formData.featured,
-    }
-
-    onUpdateOpportunities([...opportunities, newOpportunity])
-    setFormData(initialForm)
-    setIsAddModalOpen(false)
-  }
 
   const handleEditOpportunity = () => {
     if (!selectedOpportunity) return
@@ -148,6 +145,16 @@ export function AdminOpportunities({
       tags: opportunity.tags.join(", "),
       url: opportunity.url,
       featured: opportunity.featured || false,
+      aboutOpportunity: opportunity.aboutOpportunity || "",
+      requirements: opportunity.requirements || "",
+      howToApply: opportunity.howToApply || "",
+      whatYouGet: opportunity.whatYouGet || "",
+      programStartDate: opportunity.programStartDate || "",
+      programEndDate: opportunity.programEndDate || "",
+      contactEmail: opportunity.contactEmail || "",
+      eligibilityAge: opportunity.eligibilityAge || "",
+      teamSize: opportunity.teamSize || "",
+      languageRequirements: opportunity.languageRequirements || "",
     })
     setIsEditModalOpen(true)
   }
@@ -158,127 +165,242 @@ export function AdminOpportunities({
   }
 
   const OpportunityForm = ({ isEdit = false }: { isEdit?: boolean }) => (
-    <ScrollArea className="max-h-[70vh]">
+    <ScrollArea className="max-h-[80vh]">
       <div className="space-y-6 pr-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm">Title</label>
-            <Input
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Opportunity title"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm">Organization</label>
-            <Input
-              value={formData.organization}
-              onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
-              placeholder="Organization name"
-            />
-          </div>
-        </div>
+        <Tabs defaultValue="basic" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="basic">Basic Info</TabsTrigger>
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="dates">Dates & Contact</TabsTrigger>
+            <TabsTrigger value="requirements">Requirements</TabsTrigger>
+          </TabsList>
 
-        <div className="space-y-2">
-          <label className="text-sm">Description</label>
-          <Textarea
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Brief description"
-            rows={3}
-          />
-        </div>
+          <TabsContent value="basic" className="space-y-6 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Title *</label>
+                <Input
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="Global Innovation Challenge 2025"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Organization *</label>
+                <Input
+                  value={formData.organization}
+                  onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+                  placeholder="Tech for Good Foundation"
+                />
+              </div>
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm">Category</label>
-            <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm">Location</label>
-            <Input
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              placeholder="Location"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm">Deadline</label>
-            <Input
-              type="date"
-              value={formData.deadline}
-              onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-            />
-          </div>
-        </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Brief Description *</label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Brief overview of the opportunity"
+                rows={3}
+              />
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm">Amount (optional)</label>
-            <Input
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              placeholder="e.g., $50,000"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm">URL</label>
-            <Input
-              value={formData.url}
-              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-              placeholder="https://..."
-            />
-          </div>
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Category</label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Location</label>
+                <Input
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  placeholder="Global"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Prize/Amount</label>
+                <Input
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  placeholder="$50,000"
+                />
+              </div>
+            </div>
 
-        <div className="space-y-2">
-          <label className="text-sm">Tags (comma separated)</label>
-          <Input
-            value={formData.tags}
-            onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-            placeholder="Graduate, Research, International"
-          />
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Application URL</label>
+                <Input
+                  value={formData.url}
+                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                  placeholder="https://apply.example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tags (comma separated)</label>
+                <Input
+                  value={formData.tags}
+                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  placeholder="Technology, Climate, Innovation"
+                />
+              </div>
+            </div>
 
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="featured"
-            checked={formData.featured}
-            onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-            className="rounded"
-          />
-          <label htmlFor="featured" className="text-sm">
-            Feature this opportunity
-          </label>
-        </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="featured"
+                checked={formData.featured}
+                onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                className="rounded"
+              />
+              <label htmlFor="featured" className="text-sm font-medium">
+                Feature this opportunity
+              </label>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="details" className="space-y-6 mt-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">About This Opportunity</label>
+              <Textarea
+                value={formData.aboutOpportunity}
+                onChange={(e) => setFormData({ ...formData, aboutOpportunity: e.target.value })}
+                placeholder="Join the world's most prestigious innovation challenge focused on developing cutting-edge solutions for climate change..."
+                rows={4}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">How to Apply</label>
+              <Textarea
+                value={formData.howToApply}
+                onChange={(e) => setFormData({ ...formData, howToApply: e.target.value })}
+                placeholder="Submit your application through our online portal including your team information, project proposal..."
+                rows={4}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">What You'll Get</label>
+              <Textarea
+                value={formData.whatYouGet}
+                onChange={(e) => setFormData({ ...formData, whatYouGet: e.target.value })}
+                placeholder="$50,000 grand prize, Mentorship from industry leaders, Access to investor network..."
+                rows={4}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="dates" className="space-y-6 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Application Deadline *</label>
+                <Input
+                  type="date"
+                  value={formData.deadline}
+                  onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Program Start Date</label>
+                <Input
+                  type="date"
+                  value={formData.programStartDate}
+                  onChange={(e) => setFormData({ ...formData, programStartDate: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Program End Date</label>
+                <Input
+                  type="date"
+                  value={formData.programEndDate}
+                  onChange={(e) => setFormData({ ...formData, programEndDate: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Contact Email</label>
+              <Input
+                type="email"
+                value={formData.contactEmail}
+                onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                placeholder="innovation@techforgood.org"
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="requirements" className="space-y-6 mt-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Requirements</label>
+              <Textarea
+                value={formData.requirements}
+                onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
+                placeholder="Must be 18-35 years old, Team of 2-5 members, Working prototype required..."
+                rows={4}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Age Eligibility</label>
+                <Input
+                  value={formData.eligibilityAge}
+                  onChange={(e) => setFormData({ ...formData, eligibilityAge: e.target.value })}
+                  placeholder="18-35 years old"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Team Size</label>
+                <Input
+                  value={formData.teamSize}
+                  onChange={(e) => setFormData({ ...formData, teamSize: e.target.value })}
+                  placeholder="2-5 members"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Language Requirements</label>
+                <Input
+                  value={formData.languageRequirements}
+                  onChange={(e) => setFormData({ ...formData, languageRequirements: e.target.value })}
+                  placeholder="English proficiency required"
+                />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <div className="flex justify-end space-x-3 pt-6 border-t">
           <Button
             variant="outline"
             onClick={() => {
               setFormData(initialForm)
-              isEdit ? setIsEditModalOpen(false) : setIsAddModalOpen(false)
+              setIsEditModalOpen(false)
             }}
           >
             Cancel
           </Button>
           <Button
-            onClick={isEdit ? handleEditOpportunity : handleAddOpportunity}
+            onClick={handleEditOpportunity}
             disabled={!formData.title || !formData.organization || !formData.description}
           >
-            {isEdit ? "Update" : "Create"}
+            Update
           </Button>
         </div>
       </div>
@@ -287,30 +409,20 @@ export function AdminOpportunities({
 
   return (
     <div className="p-8 space-y-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl mb-2">Opportunities</h1>
           <p className="text-muted-foreground">Manage all opportunity listings</p>
         </div>
 
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Add Opportunity
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Add New Opportunity</DialogTitle>
-            </DialogHeader>
-            <OpportunityForm />
-          </DialogContent>
-        </Dialog>
+        <Link href="/admin/opportunities/add">
+          <Button className="gap-2">
+            <Plus className="w-4 h-4" />
+            Add Opportunity
+          </Button>
+        </Link>
       </div>
 
-      {/* Filters */}
       <div className="flex gap-4">
         <div className="flex-1 max-w-sm">
           <Input
@@ -334,7 +446,6 @@ export function AdminOpportunities({
         </Select>
       </div>
 
-      {/* Opportunities Table */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">
@@ -436,7 +547,6 @@ export function AdminOpportunities({
         </CardContent>
       </Card>
 
-      {/* Edit Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
