@@ -136,6 +136,18 @@ export default async function OpportunityPage({ params }: { params: { id: string
               </div>
             )}
 
+            {opportunity.requirements && (
+              <div className="glass-card p-6 sm:p-8">
+                <h2 className="text-xl sm:text-2xl font-medium text-slate-800 mb-6 flex items-center gap-3">
+                  <CheckCircle className="h-6 w-6 text-slate-600" />
+                  Requirements
+                </h2>
+                <div className="text-slate-600 text-sm sm:text-base font-light whitespace-pre-line">
+                  {opportunity.requirements}
+                </div>
+              </div>
+            )}
+
             {opportunity.how_to_apply && (
               <div className="glass-card p-6 sm:p-8">
                 <h2 className="text-xl sm:text-2xl font-medium text-slate-800 mb-6 flex items-center gap-3">
@@ -157,7 +169,18 @@ export default async function OpportunityPage({ params }: { params: { id: string
           </div>
 
           <div className="space-y-6">
-            {/* Important Dates - moved to top as most critical info */}
+            {/* What You'll Get - restored to top position */}
+            {opportunity.what_you_get && (
+              <div className="glass-card p-6">
+                <h3 className="text-lg sm:text-xl font-medium text-slate-800 mb-4 flex items-center gap-2">
+                  <Award className="h-5 w-5 text-slate-600" />
+                  What You'll Get
+                </h3>
+                <div className="text-sm text-slate-600 font-light whitespace-pre-line">{opportunity.what_you_get}</div>
+              </div>
+            )}
+
+            {/* Important Dates */}
             <div className="glass-card p-6">
               <h3 className="text-lg sm:text-xl font-medium text-slate-800 mb-4 flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-slate-600" />
@@ -195,17 +218,6 @@ export default async function OpportunityPage({ params }: { params: { id: string
               </div>
             </div>
 
-            {/* Requirements - moved to sidebar for better visibility */}
-            {opportunity.requirements && (
-              <div className="glass-card p-6">
-                <h3 className="text-lg sm:text-xl font-medium text-slate-800 mb-4 flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-slate-600" />
-                  Requirements
-                </h3>
-                <div className="text-sm text-slate-600 font-light whitespace-pre-line">{opportunity.requirements}</div>
-              </div>
-            )}
-
             {/* Contact Information */}
             {(opportunity.contact_email || opportunity.contact_phone || opportunity.website_url) && (
               <div className="glass-card p-6">
@@ -239,17 +251,6 @@ export default async function OpportunityPage({ params }: { params: { id: string
                     </div>
                   )}
                 </div>
-              </div>
-            )}
-
-            {/* What You'll Get */}
-            {opportunity.what_you_get && (
-              <div className="glass-card p-6">
-                <h3 className="text-lg sm:text-xl font-medium text-slate-800 mb-4 flex items-center gap-2">
-                  <Award className="h-5 w-5 text-slate-600" />
-                  What You'll Get
-                </h3>
-                <div className="text-sm text-slate-600 font-light whitespace-pre-line">{opportunity.what_you_get}</div>
               </div>
             )}
 
