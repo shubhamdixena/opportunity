@@ -5,6 +5,7 @@ import { Button } from "./ui/button"
 import type { Opportunity } from "./OpportunityCard"
 import { TrendingUp, Users, Briefcase, Calendar, Plus, ArrowRight } from "lucide-react"
 import { useMemo } from "react"
+import { useRouter } from "next/navigation"
 
 interface AdminDashboardProps {
   opportunities: Opportunity[]
@@ -12,6 +13,8 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardProps) {
+  const router = useRouter()
+  
   const stats = useMemo(() => {
     const total = opportunities.length
     const featured = opportunities.filter((opp) => opp.featured).length
@@ -92,7 +95,7 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
           <Button
             variant="outline"
             className="h-16 justify-start gap-3 border-dashed bg-transparent"
-            onClick={() => onPageChange("opportunities")}
+            onClick={() => router.push("/admin/opportunities/add")}
           >
             <Plus className="h-4 w-4" />
             Add Opportunity
@@ -101,7 +104,7 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
           <Button
             variant="outline"
             className="h-16 justify-between bg-transparent"
-            onClick={() => onPageChange("opportunities")}
+            onClick={() => router.push("/admin/opportunities")}
           >
             <span>Manage Opportunities</span>
             <ArrowRight className="h-4 w-4" />
@@ -110,7 +113,7 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
           <Button
             variant="outline"
             className="h-16 justify-between bg-transparent"
-            onClick={() => onPageChange("users")}
+            onClick={() => router.push("/admin/users")}
           >
             <span>User Management</span>
             <ArrowRight className="h-4 w-4" />
@@ -119,7 +122,7 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
           <Button
             variant="outline"
             className="h-16 justify-between bg-transparent"
-            onClick={() => onPageChange("analytics")}
+            onClick={() => router.push("/admin/analytics")}
           >
             <span>View Analytics</span>
             <ArrowRight className="h-4 w-4" />
