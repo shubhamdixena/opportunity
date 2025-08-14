@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Plus, X } from "lucide-react"
 import Link from "next/link"
 
 interface OpportunityForm {
@@ -18,7 +18,7 @@ interface OpportunityForm {
   category: string
   location: string
   deadline: string
-  amount: string
+  amounts: { type: string; value: string }[]
   tags: string
   url: string
   featured: boolean
@@ -33,8 +33,6 @@ interface OpportunityForm {
   languageRequirements: string
   fundingType: string
   eligibleCountries: string
-  minAmount: string
-  maxAmount: string
 }
 
 const initialForm: OpportunityForm = {
@@ -44,7 +42,7 @@ const initialForm: OpportunityForm = {
   category: "Scholarships",
   location: "",
   deadline: "",
-  amount: "",
+  amounts: [{ type: "Prize Amount", value: "" }],
   tags: "",
   url: "",
   featured: false,
@@ -59,8 +57,6 @@ const initialForm: OpportunityForm = {
   languageRequirements: "",
   fundingType: "Full Funding",
   eligibleCountries: "",
-  minAmount: "",
-  maxAmount: "",
 }
 
 export default function AddOpportunityPage() {
@@ -79,48 +75,60 @@ export default function AddOpportunityPage() {
     "Misc",
   ]
 
-  const fundingTypes = ["Full Funding", "Partial Funding", "Prize Money", "Stipend", "Grant", "Variable Amount"]
+  const fundingTypes = ["Full Funding", "Partial Funding", "No Funding", "Stipend", "Travel Grant", "Equipment Grant"]
+  const amountTypes = [
+    "Prize Amount",
+    "Funding Amount",
+    "Stipend",
+    "Travel Allowance",
+    "Equipment Budget",
+    "Living Allowance",
+  ]
 
   const handleSubmit = async () => {
     setIsSubmitting(true)
 
-    try {
-      const response = await fetch('/api/opportunities', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
+    // TODO: Implement actual API call to save opportunity
+    console.log("Creating opportunity:", formData)
 
-      if (!response.ok) {
-        throw new Error('Failed to create opportunity')
-      }
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      const result = await response.json()
-      
-      if (result.success) {
-        router.push("/admin/opportunities")
-      } else {
-        throw new Error(result.error || 'Failed to create opportunity')
-      }
-    } catch (error) {
-      console.error("Error creating opportunity:", error)
-      alert("Failed to create opportunity. Please try again.")
-    } finally {
-      setIsSubmitting(false)
-    }
+    setIsSubmitting(false)
+    router.push("/admin/opportunities")
   }
 
   const handleCancel = () => {
     router.push("/admin/opportunities")
   }
 
+  const addAmount = () => {
+    setFormData({
+      ...formData,
+      amounts: [...formData.amounts, { type: "Prize Amount", value: "" }],
+    })
+  }
+
+  const removeAmount = (index: number) => {
+    if (formData.amounts.length > 1) {
+      setFormData({
+        ...formData,
+        amounts: formData.amounts.filter((_, i) => i !== index),
+      })
+    }
+  }
+
+  const updateAmount = (index: number, field: "type" | "value", value: string) => {
+    const newAmounts = [...formData.amounts]
+    newAmounts[index][field] = value
+    setFormData({ ...formData, amounts: newAmounts })
+  }
+
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-4">
         <Link href="/admin/opportunities">
-          <Button variant="ghost" size="icon" className="h-10 w-10">
+          <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-slate-100">
             <ArrowLeft className="w-5 h-5" />
           </Button>
         </Link>
@@ -132,10 +140,10 @@ export default function AddOpportunityPage() {
         </div>
       </div>
 
-      <Card className="border border-slate-200/60 shadow-xl bg-white/95 backdrop-blur-sm">
+      <Card className="border border-slate-200 shadow-xl bg-white">
         <CardContent className="p-8">
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8 bg-slate-100/80 p-1 rounded-lg">
+            <TabsList className="grid w-full grid-cols-4 mb-8 bg-slate-100 p-1 rounded-lg">
               <TabsTrigger value="basic" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
                 Basic Info
               </TabsTrigger>
@@ -158,7 +166,7 @@ export default function AddOpportunityPage() {
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="Global Innovation Challenge 2025"
-                    className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                    className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                   />
                 </div>
                 <div className="space-y-3">
@@ -167,7 +175,7 @@ export default function AddOpportunityPage() {
                     value={formData.organization}
                     onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
                     placeholder="Tech for Good Foundation"
-                    className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                    className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                   />
                 </div>
               </div>
@@ -179,7 +187,7 @@ export default function AddOpportunityPage() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Brief overview of the opportunity"
                   rows={4}
-                  className="resize-none border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                  className="resize-none border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                 />
               </div>
 
@@ -190,7 +198,7 @@ export default function AddOpportunityPage() {
                     value={formData.category}
                     onValueChange={(value) => setFormData({ ...formData, category: value })}
                   >
-                    <SelectTrigger className="h-12 border-slate-200 focus:border-slate-400">
+                    <SelectTrigger className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -208,7 +216,7 @@ export default function AddOpportunityPage() {
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     placeholder="Global"
-                    className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                    className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                   />
                 </div>
                 <div className="space-y-3">
@@ -217,7 +225,7 @@ export default function AddOpportunityPage() {
                     value={formData.fundingType}
                     onValueChange={(value) => setFormData({ ...formData, fundingType: value })}
                   >
-                    <SelectTrigger className="h-12 border-slate-200 focus:border-slate-400">
+                    <SelectTrigger className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -232,36 +240,56 @@ export default function AddOpportunityPage() {
               </div>
 
               <div className="space-y-4">
-                <label className="text-sm font-semibold text-slate-700">Amount Details</label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-xs text-slate-600">Single Amount</label>
-                    <Input
-                      value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      placeholder="$50,000"
-                      className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs text-slate-600">Minimum Amount</label>
-                    <Input
-                      value={formData.minAmount}
-                      onChange={(e) => setFormData({ ...formData, minAmount: e.target.value })}
-                      placeholder="$10,000"
-                      className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs text-slate-600">Maximum Amount</label>
-                    <Input
-                      value={formData.maxAmount}
-                      onChange={(e) => setFormData({ ...formData, maxAmount: e.target.value })}
-                      placeholder="$100,000"
-                      className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
-                    />
-                  </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-slate-700">Amounts</label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addAmount}
+                    className="h-8 px-3 text-xs bg-transparent"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add Amount
+                  </Button>
                 </div>
+                {formData.amounts.map((amount, index) => (
+                  <div key={index} className="flex gap-3 items-end">
+                    <div className="flex-1 space-y-2">
+                      <Select value={amount.type} onValueChange={(value) => updateAmount(index, "type", value)}>
+                        <SelectTrigger className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {amountTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <Input
+                        value={amount.value}
+                        onChange={(e) => updateAmount(index, "value", e.target.value)}
+                        placeholder="$50,000 or $10,000 - $50,000"
+                        className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
+                      />
+                    </div>
+                    {formData.amounts.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeAmount(index)}
+                        className="h-12 w-12 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -271,7 +299,7 @@ export default function AddOpportunityPage() {
                     value={formData.url}
                     onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                     placeholder="https://apply.example.com"
-                    className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                    className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                   />
                 </div>
                 <div className="space-y-3">
@@ -280,28 +308,28 @@ export default function AddOpportunityPage() {
                     value={formData.tags}
                     onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                     placeholder="Technology, Climate, Innovation"
-                    className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                    className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                   />
                 </div>
               </div>
 
               <div className="space-y-3">
-                <label className="text-sm font-semibold text-slate-700">Eligible Countries/Regions</label>
+                <label className="text-sm font-semibold text-slate-700">Eligible Countries/Nations</label>
                 <Input
                   value={formData.eligibleCountries}
                   onChange={(e) => setFormData({ ...formData, eligibleCountries: e.target.value })}
-                  placeholder="Global, USA, EU, Asia-Pacific, etc."
-                  className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                  placeholder="Global, USA, EU, Developing Countries, etc."
+                  className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                 />
               </div>
 
-              <div className="flex items-center space-x-3 p-4 bg-slate-50/80 rounded-xl border border-slate-200/60">
+              <div className="flex items-center space-x-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <input
                   type="checkbox"
                   id="featured"
                   checked={formData.featured}
                   onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                  className="w-4 h-4 rounded border-slate-300 text-slate-600 focus:ring-slate-400/20"
+                  className="w-4 h-4 rounded border-slate-300 text-slate-600 focus:ring-slate-500"
                 />
                 <label htmlFor="featured" className="text-sm font-medium text-slate-700">
                   Feature this opportunity on the homepage
@@ -317,7 +345,7 @@ export default function AddOpportunityPage() {
                   onChange={(e) => setFormData({ ...formData, aboutOpportunity: e.target.value })}
                   placeholder="Join the world's most prestigious innovation challenge focused on developing cutting-edge solutions for climate change..."
                   rows={5}
-                  className="resize-none border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                  className="resize-none border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                 />
               </div>
 
@@ -328,7 +356,7 @@ export default function AddOpportunityPage() {
                   onChange={(e) => setFormData({ ...formData, howToApply: e.target.value })}
                   placeholder="Submit your application through our online portal including your team information, project proposal..."
                   rows={5}
-                  className="resize-none border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                  className="resize-none border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                 />
               </div>
 
@@ -339,7 +367,7 @@ export default function AddOpportunityPage() {
                   onChange={(e) => setFormData({ ...formData, whatYouGet: e.target.value })}
                   placeholder="$50,000 grand prize, Mentorship from industry leaders, Access to investor network..."
                   rows={5}
-                  className="resize-none border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                  className="resize-none border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                 />
               </div>
             </TabsContent>
@@ -352,7 +380,7 @@ export default function AddOpportunityPage() {
                     type="date"
                     value={formData.deadline}
                     onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                    className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                    className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                   />
                 </div>
                 <div className="space-y-3">
@@ -361,7 +389,7 @@ export default function AddOpportunityPage() {
                     type="date"
                     value={formData.programStartDate}
                     onChange={(e) => setFormData({ ...formData, programStartDate: e.target.value })}
-                    className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                    className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                   />
                 </div>
                 <div className="space-y-3">
@@ -370,7 +398,7 @@ export default function AddOpportunityPage() {
                     type="date"
                     value={formData.programEndDate}
                     onChange={(e) => setFormData({ ...formData, programEndDate: e.target.value })}
-                    className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                    className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                   />
                 </div>
               </div>
@@ -382,7 +410,7 @@ export default function AddOpportunityPage() {
                   value={formData.contactEmail}
                   onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
                   placeholder="innovation@techforgood.org"
-                  className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                  className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                 />
               </div>
             </TabsContent>
@@ -395,7 +423,7 @@ export default function AddOpportunityPage() {
                   onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
                   placeholder="Must be 18-35 years old, Working prototype required..."
                   rows={5}
-                  className="resize-none border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                  className="resize-none border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                 />
               </div>
 
@@ -406,7 +434,7 @@ export default function AddOpportunityPage() {
                     value={formData.eligibilityAge}
                     onChange={(e) => setFormData({ ...formData, eligibilityAge: e.target.value })}
                     placeholder="18-35 years old"
-                    className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                    className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                   />
                 </div>
                 <div className="space-y-3">
@@ -415,19 +443,19 @@ export default function AddOpportunityPage() {
                     value={formData.languageRequirements}
                     onChange={(e) => setFormData({ ...formData, languageRequirements: e.target.value })}
                     placeholder="English proficiency required"
-                    className="h-12 border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                    className="h-12 border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                   />
                 </div>
               </div>
             </TabsContent>
           </Tabs>
 
-          <div className="flex justify-end space-x-4 pt-8 mt-8 border-t border-slate-200/60">
+          <div className="flex justify-end space-x-4 pt-8 mt-8 border-t border-slate-200">
             <Button
               variant="outline"
               onClick={handleCancel}
               disabled={isSubmitting}
-              className="px-8 h-12 border-slate-200 hover:bg-slate-50 bg-transparent"
+              className="px-8 h-12 border-slate-300 hover:bg-slate-50 bg-transparent"
             >
               Cancel
             </Button>

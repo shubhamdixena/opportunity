@@ -3,33 +3,19 @@
 import { Card, CardContent } from "./ui/card"
 import { Button } from "./ui/button"
 import type { Opportunity } from "./opportunity-card"
-import { TrendingUp, Users, Briefcase, Calendar, Plus, ArrowRight, AlertCircle } from "lucide-react"
+import { TrendingUp, Users, Briefcase, Calendar, Plus, ArrowRight } from "lucide-react"
 import { useMemo } from "react"
-
-interface AdminStats {
-  opportunities: {
-    total: number
-    active: number
-    featured: number
-    expiringSoon: number
-  }
-  users: {
-    total: number
-    active: number
-    pending: number
-    suspended: number
-    recentlyActive: number
-  }
-}
+import { useRouter } from "next/navigation"
 
 interface AdminDashboardProps {
   opportunities: Opportunity[]
-  stats?: AdminStats | null
   onPageChange: (page: string) => void
 }
 
-export function AdminDashboard({ opportunities, stats: adminStats, onPageChange }: AdminDashboardProps) {
-  const opportunityStats = useMemo(() => {
+export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardProps) {
+  const router = useRouter()
+  
+  const stats = useMemo(() => {
     const total = opportunities.length
     const featured = opportunities.filter((opp) => opp.featured).length
 
@@ -42,37 +28,6 @@ export function AdminDashboard({ opportunities, stats: adminStats, onPageChange 
 
     return { total, featured, expiringSoon }
   }, [opportunities])
-
-  // Transform API stats to expected format or use calculated fallback
-  const displayStats = adminStats ? {
-    opportunities: {
-      total: adminStats.opportunities?.total || 0,
-      active: adminStats.opportunities?.active || 0,
-      featured: adminStats.opportunities?.featured || opportunityStats.featured,
-      expiringSoon: adminStats.opportunities?.expiringSoon || opportunityStats.expiringSoon
-    },
-    users: {
-      total: adminStats.users?.total || 0,
-      active: adminStats.users?.active || 0,
-      pending: adminStats.users?.pending || 0,
-      suspended: adminStats.users?.suspended || 0,
-      recentlyActive: adminStats.users?.recentlyActive || 0
-    }
-  } : {
-    opportunities: {
-      total: opportunityStats.total,
-      active: opportunityStats.total, // Assume all calculated opportunities are active
-      featured: opportunityStats.featured,
-      expiringSoon: opportunityStats.expiringSoon
-    },
-    users: { 
-      total: 0, 
-      active: 0, 
-      pending: 0, 
-      suspended: 0, 
-      recentlyActive: 0 
-    }
-  }
 
   return (
     <div className="p-6 space-y-6">
@@ -89,7 +44,7 @@ export function AdminDashboard({ opportunities, stats: adminStats, onPageChange 
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Total Opportunities</p>
-                <p className="text-2xl">{displayStats.opportunities.total}</p>
+                <p className="text-2xl">{stats.total}</p>
               </div>
               <Briefcase className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -101,7 +56,7 @@ export function AdminDashboard({ opportunities, stats: adminStats, onPageChange 
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Active Users</p>
-                <p className="text-2xl">{displayStats.users.recentlyActive}</p>
+                <p className="text-2xl">2,847</p>
               </div>
               <Users className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -113,7 +68,7 @@ export function AdminDashboard({ opportunities, stats: adminStats, onPageChange 
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Featured</p>
-                <p className="text-2xl">{displayStats.opportunities.featured}</p>
+                <p className="text-2xl">{stats.featured}</p>
               </div>
               <TrendingUp className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -125,7 +80,7 @@ export function AdminDashboard({ opportunities, stats: adminStats, onPageChange 
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Expiring Soon</p>
-                <p className="text-2xl text-orange-600">{displayStats.opportunities.expiringSoon}</p>
+                <p className="text-2xl text-orange-600">{stats.expiringSoon}</p>
               </div>
               <Calendar className="h-5 w-5 text-orange-500" />
             </div>
@@ -140,7 +95,7 @@ export function AdminDashboard({ opportunities, stats: adminStats, onPageChange 
           <Button
             variant="outline"
             className="h-16 justify-start gap-3 border-dashed bg-transparent"
-            onClick={() => onPageChange("opportunities")}
+            onClick={() => router.push("/admin/opportunities/add")}
           >
             <Plus className="h-4 w-4" />
             Add Opportunity
@@ -149,7 +104,7 @@ export function AdminDashboard({ opportunities, stats: adminStats, onPageChange 
           <Button
             variant="outline"
             className="h-16 justify-between bg-transparent"
-            onClick={() => onPageChange("opportunities")}
+            onClick={() => router.push("/admin/opportunities")}
           >
             <span>Manage Opportunities</span>
             <ArrowRight className="h-4 w-4" />
@@ -158,7 +113,7 @@ export function AdminDashboard({ opportunities, stats: adminStats, onPageChange 
           <Button
             variant="outline"
             className="h-16 justify-between bg-transparent"
-            onClick={() => onPageChange("users")}
+            onClick={() => router.push("/admin/users")}
           >
             <span>User Management</span>
             <ArrowRight className="h-4 w-4" />
@@ -167,7 +122,7 @@ export function AdminDashboard({ opportunities, stats: adminStats, onPageChange 
           <Button
             variant="outline"
             className="h-16 justify-between bg-transparent"
-            onClick={() => onPageChange("analytics")}
+            onClick={() => router.push("/admin/analytics")}
           >
             <span>View Analytics</span>
             <ArrowRight className="h-4 w-4" />
