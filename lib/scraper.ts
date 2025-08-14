@@ -36,6 +36,7 @@ export interface ScrapedContent {
     description?: string
     requirements?: string
     apply_info?: string
+    raw_html?: string
     scraped_at: string
     source_url: string
   }
@@ -102,6 +103,7 @@ export async function scrapeWebpage(url: string, config?: Partial<ScrapingConfig
         description: content.description,
         requirements: content.requirements,
         apply_info: content.apply_info,
+        raw_html: html,
         scraped_at: new Date().toISOString(),
         source_url: url
       }

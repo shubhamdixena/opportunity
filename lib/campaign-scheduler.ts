@@ -34,7 +34,6 @@ export interface ScrapingQueueItem {
 }
 
 export class CampaignScheduler {
-  private supabase = createClient()
 
   /**
    * Create a new campaign run and queue scraping tasks
@@ -43,8 +42,9 @@ export class CampaignScheduler {
     const startTime = Date.now()
 
     try {
+      const supabase = await createClient()
       // Get campaign details
-      const { data: campaign, error: campaignError } = await this.supabase
+      const { data: campaign, error: campaignError } = await supabase
         .from('content_campaigns')
         .select('*, source_ids')
         .eq('id', campaignId)
@@ -56,7 +56,7 @@ export class CampaignScheduler {
       }
 
       // Create campaign run record
-      const { data: campaignRun, error: runError } = await this.supabase
+      const { data: campaignRun, error: runError } = await supabase
         .from('campaign_runs')
         .insert([{
           campaign_id: campaignId,
@@ -76,7 +76,7 @@ export class CampaignScheduler {
       }
 
       // Get active sources for this campaign
-      const { data: sources, error: sourcesError } = await this.supabase
+      const { data: sources, error: sourcesError } = await supabase
         .from('content_sources')
         .select('*')
         .in('id', campaign.source_ids || [])
@@ -104,7 +104,7 @@ export class CampaignScheduler {
       }))
 
       if (queueItems.length > 0) {
-        const { error: queueError } = await this.supabase
+        const { error: queueError } = await supabase
           .from('scraping_queue')
           .insert(queueItems)
 
@@ -128,7 +128,8 @@ export class CampaignScheduler {
    * Process items in the scraping queue
    */
   async processScrapingQueue(campaignRunId: string): Promise<void> {
-    const { data: queueItems, error } = await this.supabase
+    const supabase = await createClient()
+    const { data: queueItems, error } = await supabase
       .from('scraping_queue')
       .select('*')
       .eq('status', 'queued')
@@ -154,8 +155,9 @@ export class CampaignScheduler {
     const startTime = Date.now()
 
     try {
+      const supabase = await createClient()
       // Mark as processing
-      await this.supabase
+      await supabase
         .from('scraping_queue')
         .update({
           status: 'processing',
@@ -220,7 +222,7 @@ export class CampaignScheduler {
       }
 
       // Mark queue item as completed
-      await this.supabase
+      await supabase
         .from('scraping_queue')
         .update({
           status: 'completed',
@@ -244,7 +246,7 @@ export class CampaignScheduler {
 
       // Update queue item
       const shouldRetry = item.attempts < item.max_attempts
-      await this.supabase
+      await supabase
         .from('scraping_queue')
         .update({
           status: shouldRetry ? 'retrying' : 'failed',
@@ -291,7 +293,8 @@ export class CampaignScheduler {
    */
   private async createOpportunityFromAI(aiData: any, contentItemId: string): Promise<void> {
     try {
-      const { data: opportunity, error } = await this.supabase
+      const supabase = await createClient()
+      const { data: opportunity, error } = await supabase
         .from('opportunities')
         .insert([{
           ...aiData,
@@ -324,7 +327,8 @@ export class CampaignScheduler {
     responseTime: number,
     metadata: Record<string, any>
   ): Promise<void> {
-    await this.supabase
+    const supabase = await createClient()
+    await supabase
       .from('scraping_logs')
       .insert([{
         campaign_run_id: campaignRunId,
@@ -351,14 +355,15 @@ export class CampaignScheduler {
       errors_count?: number
     }
   ): Promise<void> {
-    const { data: currentRun } = await this.supabase
+    const supabase = await createClient()
+    const { data: currentRun } = await supabase
       .from('campaign_runs')
       .select('*')
       .eq('id', campaignRunId)
       .single()
 
     if (currentRun) {
-      await this.supabase
+      await supabase
         .from('campaign_runs')
         .update({
           sources_processed: (currentRun.sources_processed || 0) + (updates.sources_processed || 0),
@@ -376,7 +381,8 @@ export class CampaignScheduler {
   async completeCampaignRun(campaignRunId: string): Promise<void> {
     const completedAt = new Date().toISOString()
 
-    const { data: run } = await this.supabase
+    const supabase = await createClient()
+    const { data: run } = await supabase
       .from('campaign_runs')
       .select('*')
       .eq('id', campaignRunId)
@@ -385,7 +391,7 @@ export class CampaignScheduler {
     if (run) {
       const executionTime = new Date(completedAt).getTime() - new Date(run.started_at).getTime()
 
-      await this.supabase
+      await supabase
         .from('campaign_runs')
         .update({
           status: 'completed',
@@ -400,7 +406,8 @@ export class CampaignScheduler {
    * Get campaign runs with stats
    */
   async getCampaignRuns(campaignId?: string): Promise<CampaignRun[]> {
-    let query = this.supabase
+    const supabase = await createClient()
+    let query = supabase
       .from('campaign_runs')
       .select('*')
 
@@ -428,7 +435,8 @@ export class CampaignScheduler {
     completed: number
     failed: number
   }> {
-    const { data, error } = await this.supabase
+    const supabase = await createClient()
+    const { data, error } = await supabase
       .from('scraping_queue')
       .select('status')
 
