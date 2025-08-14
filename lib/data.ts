@@ -99,12 +99,3 @@ export const categoriesData = [
   { name: "Accelerators", href: "/categories/accelerators" },
   { name: "Residencies", href: "/categories/residencies" },
 ]
-
-export const categoryTypes = ["All", "Competition", "Fellowship", "Scholarship", "Grant", "Accelerator", "Residency"]
-
-export const statsData = [
-  { label: "Active Opportunities", value: "2,500+", icon: "TrendingUp" },
-  { label: "Success Stories", value: "15,000+", icon: "Star" },
-  { label: "Total Funding", value: "$50M+", icon: "Award" },
-  { label: "Global Reach", value: "150+", icon: "Globe" },
-]

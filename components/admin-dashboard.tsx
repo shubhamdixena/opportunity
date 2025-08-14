@@ -2,8 +2,8 @@
 
 import { Card, CardContent } from "./ui/card"
 import { Button } from "./ui/button"
-import type { Opportunity } from "./OpportunityCard"
-import { TrendingUp, Users, Briefcase, Calendar, Plus, ArrowRight } from "lucide-react"
+import type { Opportunity } from "./opportunity-card"
+import { TrendingUp, Users, Briefcase, Calendar, Plus, ArrowRight, AlertCircle } from "lucide-react"
 import { useMemo } from "react"
 
 interface AdminStats {
