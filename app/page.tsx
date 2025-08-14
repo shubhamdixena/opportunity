@@ -10,6 +10,7 @@ async function getOpportunities(): Promise<Opportunity[]> {
       .from("opportunities")
       .select("*")
       .order("created_at", { ascending: false })
+      .limit(20) // Limit initial load for better performance
 
     if (error) {
       console.error("Error fetching opportunities:", error)
@@ -40,6 +41,9 @@ async function getOpportunities(): Promise<Opportunity[]> {
     return []
   }
 }
+
+// Enable static generation with revalidation for better performance
+export const revalidate = 300 // 5 minutes
 
 export default async function App() {
   const opportunities = await getOpportunities()

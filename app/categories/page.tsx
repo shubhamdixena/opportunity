@@ -3,70 +3,49 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { ArrowRight, BookOpen, Trophy, Briefcase, Users, Globe, Lightbulb, Heart, Zap } from "lucide-react"
+import { getRevalidateConfig } from "@/lib/cache"
 
-const categories = [
-  {
-    name: "Scholarships",
-    description: "Educational funding opportunities for students worldwide",
-    count: 78,
-    icon: BookOpen,
-    href: "/categories/scholarships",
-    featured: true,
-  },
-  {
-    name: "Competitions",
-    description: "Innovation and skill-based competitions",
-    count: 45,
-    icon: Trophy,
-    href: "/categories/competitions",
-    featured: true,
-  },
-  {
-    name: "Internships",
-    description: "Professional development and work experience",
-    count: 32,
-    icon: Briefcase,
-    href: "/categories/internships",
-    featured: true,
-  },
-  {
-    name: "Fellowships",
-    description: "Research and leadership development programs",
-    count: 28,
-    icon: Users,
-    href: "/categories/fellowships",
-  },
-  {
-    name: "Exchange Programs",
-    description: "Cultural and academic exchange opportunities",
-    count: 19,
-    icon: Globe,
-    href: "/categories/exchange",
-  },
-  {
-    name: "Innovation Challenges",
-    description: "Technology and startup competitions",
-    count: 24,
-    icon: Lightbulb,
-    href: "/categories/innovation",
-  },
-  {
-    name: "Volunteer Programs",
-    description: "Community service and social impact opportunities",
-    count: 15,
-    icon: Heart,
-    href: "/categories/volunteer",
-  },
-  {
-    name: "Accelerators",
-    description: "Startup incubation and mentorship programs",
-    count: 12,
-    icon: Zap,
-    href: "/categories/accelerators",
-  },
-]
+// Icon mapping for categories
+const iconMap = {
+  BookOpen,
+  Trophy,
+  Briefcase,
+  Users,
+  Globe,
+  Lightbulb,
+  Heart,
+  Zap,
+}
 
-export default function CategoriesPage() {
+interface Category {
+  name: string
+  description: string
+  count: number
+  icon: any
+  href: string
+  featured?: boolean
+}
+
+export default async function CategoriesPage() {
+  let categories: Category[] = []
+  
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/categories`, {
+      ...getRevalidateConfig('CATEGORIES')
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      categories = data.categories.map((cat: any) => ({
+        ...cat,
+        icon: iconMap[cat.icon as keyof typeof iconMap] || Zap
+      }))
+    }
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+    // Fallback to empty array - page will show "No categories found"
+  }
+
   const featuredCategories = categories.filter((cat) => cat.featured)
   const otherCategories = categories.filter((cat) => !cat.featured)
 

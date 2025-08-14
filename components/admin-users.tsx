@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
@@ -22,67 +22,51 @@ interface User {
   applications: number
 }
 
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "John Smith",
-    email: "john.smith@email.com",
-    role: "user",
-    status: "active",
-    joinDate: "2024-01-15",
-    lastActive: "2024-03-10",
-    savedOpportunities: 12,
-    applications: 5,
-  },
-  {
-    id: "2",
-    name: "Sarah Johnson",
-    email: "sarah.j@university.edu",
-    role: "user",
-    status: "active",
-    joinDate: "2024-02-03",
-    lastActive: "2024-03-11",
-    savedOpportunities: 8,
-    applications: 3,
-  },
-  {
-    id: "3",
-    name: "Michael Chen",
-    email: "m.chen@research.org",
-    role: "moderator",
-    status: "active",
-    joinDate: "2023-11-20",
-    lastActive: "2024-03-11",
-    savedOpportunities: 25,
-    applications: 12,
-  },
-  {
-    id: "4",
-    name: "Emily Davis",
-    email: "emily.davis@gmail.com",
-    role: "user",
-    status: "pending",
-    joinDate: "2024-03-08",
-    lastActive: "2024-03-08",
-    savedOpportunities: 2,
-    applications: 0,
-  },
-  {
-    id: "5",
-    name: "David Wilson",
-    email: "d.wilson@company.com",
-    role: "user",
-    status: "suspended",
-    joinDate: "2024-01-28",
-    lastActive: "2024-02-15",
-    savedOpportunities: 15,
-    applications: 7,
-  },
-]
-
 export function AdminUsers() {
-  const [users] = useState<User[]>(mockUsers)
+  const [users, setUsers] = useState<User[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+  const [loading, setLoading] = useState(true)
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true)
+      const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''
+      const response = await fetch(`/api/users?limit=100${searchParam}`)
+      
+      if (response.ok) {
+        const data = await response.json()
+        // Transform data to match expected interface
+        const transformedUsers = data.users.map((user: any) => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          status: user.status,
+          joinDate: user.join_date ? new Date(user.join_date).toISOString().split('T')[0] : '',
+          lastActive: user.last_active ? new Date(user.last_active).toISOString().split('T')[0] : '',
+          savedOpportunities: user.saved_opportunities || 0,
+          applications: user.applications || 0,
+        }))
+        setUsers(transformedUsers)
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchUsers()
+    }, 500) // Debounce search
+
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery])
 
   const filteredUsers = users.filter(
     (user) =>
@@ -119,6 +103,21 @@ export function AdminUsers() {
       default:
         return "bg-gray-500"
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="animate-pulse">
+          <h1 className="text-2xl mb-6">Users</h1>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

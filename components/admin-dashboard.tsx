@@ -6,13 +6,30 @@ import type { Opportunity } from "./OpportunityCard"
 import { TrendingUp, Users, Briefcase, Calendar, Plus, ArrowRight } from "lucide-react"
 import { useMemo } from "react"
 
+interface AdminStats {
+  opportunities: {
+    total: number
+    active: number
+    featured: number
+    expiringSoon: number
+  }
+  users: {
+    total: number
+    active: number
+    pending: number
+    suspended: number
+    recentlyActive: number
+  }
+}
+
 interface AdminDashboardProps {
   opportunities: Opportunity[]
+  stats?: AdminStats | null
   onPageChange: (page: string) => void
 }
 
-export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardProps) {
-  const stats = useMemo(() => {
+export function AdminDashboard({ opportunities, stats: adminStats, onPageChange }: AdminDashboardProps) {
+  const opportunityStats = useMemo(() => {
     const total = opportunities.length
     const featured = opportunities.filter((opp) => opp.featured).length
 
@@ -25,6 +42,12 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
 
     return { total, featured, expiringSoon }
   }, [opportunities])
+
+  // Use admin stats if available, otherwise use calculated stats
+  const displayStats = adminStats || {
+    opportunities: opportunityStats,
+    users: { total: 0, active: 0, pending: 0, suspended: 0, recentlyActive: 0 }
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -41,7 +64,7 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Total Opportunities</p>
-                <p className="text-2xl">{stats.total}</p>
+                <p className="text-2xl">{displayStats.opportunities.total}</p>
               </div>
               <Briefcase className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -53,7 +76,7 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Active Users</p>
-                <p className="text-2xl">2,847</p>
+                <p className="text-2xl">{displayStats.users.recentlyActive}</p>
               </div>
               <Users className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -65,7 +88,7 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Featured</p>
-                <p className="text-2xl">{stats.featured}</p>
+                <p className="text-2xl">{displayStats.opportunities.featured}</p>
               </div>
               <TrendingUp className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -77,7 +100,7 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Expiring Soon</p>
-                <p className="text-2xl text-orange-600">{stats.expiringSoon}</p>
+                <p className="text-2xl text-orange-600">{displayStats.opportunities.expiringSoon}</p>
               </div>
               <Calendar className="h-5 w-5 text-orange-500" />
             </div>

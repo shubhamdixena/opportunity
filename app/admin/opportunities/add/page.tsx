@@ -84,14 +84,32 @@ export default function AddOpportunityPage() {
   const handleSubmit = async () => {
     setIsSubmitting(true)
 
-    // TODO: Implement actual API call to save opportunity
-    console.log("Creating opportunity:", formData)
+    try {
+      const response = await fetch('/api/opportunities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (!response.ok) {
+        throw new Error('Failed to create opportunity')
+      }
 
-    setIsSubmitting(false)
-    router.push("/admin/opportunities")
+      const result = await response.json()
+      
+      if (result.success) {
+        router.push("/admin/opportunities")
+      } else {
+        throw new Error(result.error || 'Failed to create opportunity')
+      }
+    } catch (error) {
+      console.error("Error creating opportunity:", error)
+      alert("Failed to create opportunity. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleCancel = () => {

@@ -38,18 +38,32 @@ const Dialog = React.forwardRef<
 })
 Dialog.displayName = "Dialog"
 
-const DialogTrigger = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
-  ({ children, ...props }, ref) => {
-    const context = React.useContext(DialogContext)
-    if (!context) throw new Error("DialogTrigger must be used within Dialog")
+const DialogTrigger = React.forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement> & { asChild?: boolean }
+>(({ children, asChild = false, ...props }, ref) => {
+  const context = React.useContext(DialogContext)
+  if (!context) throw new Error("DialogTrigger must be used within Dialog")
 
-    return (
-      <button ref={ref} onClick={() => context.setOpen(true)} {...props}>
-        {children}
-      </button>
-    )
-  },
-)
+  const handleClick = (e: React.MouseEvent) => {
+    context.setOpen(true)
+    props.onClick?.(e)
+  }
+
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, {
+      ...children.props,
+      onClick: handleClick,
+      ref,
+    })
+  }
+
+  return (
+    <button ref={ref} onClick={handleClick} {...props}>
+      {children}
+    </button>
+  )
+})
 DialogTrigger.displayName = "DialogTrigger"
 
 const DialogContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(

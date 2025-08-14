@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import {
   Dialog,
@@ -19,24 +19,23 @@ import {
 } from "@/components/ui/dialog"
 import {
   Plus,
-  Upload,
   Play,
-  Search,
-  Edit,
-  Trash2,
+  RefreshCw,
   Eye,
-  Clock,
+  Trash2,
+  ExternalLink,
+  Globe,
+  Calendar,
+  TrendingUp,
+  Settings,
   CheckCircle,
   XCircle,
-  RefreshCw,
-  Bot,
-  Calendar,
-  ExternalLink,
-  Settings,
-  Globe,
-  Target,
-  Zap,
-  Filter,
+  Clock,
+  Loader2,
+  TestTube,
+  Save,
+  Edit,
+  AlertCircle,
 } from "lucide-react"
 
 // Types
@@ -44,870 +43,1013 @@ interface ContentSource {
   id: string
   name: string
   domain: string
-  isActive: boolean
+  is_active: boolean
   keywords: string[]
-  lastScraped: string
-  postsFound: number
-  successRate: number
+  last_scraped: string | null
+  posts_found: number
+  success_rate: number
+  scraping_config?: {
+    selectors?: {
+      title?: string
+      content?: string
+      description?: string
+    }
+    delay?: number
+    max_pages?: number
+  }
+  created_at?: string
+  updated_at?: string
 }
 
-interface Campaign {
+interface ContentCampaign {
   id: string
   name: string
-  sources: string[]
+  source_ids: string[]
   keywords: string[]
   category: string
   frequency: number
-  frequencyUnit: "minutes" | "hours" | "days"
-  isActive: boolean
-  maxPosts: number
-  currentPosts: number
+  frequency_unit: 'minutes' | 'hours' | 'days'
+  is_active: boolean
+  max_posts: number
+  current_posts: number
   filters: {
-    minLength: number
-    maxLength: number
-    requiredWords: string[]
-    bannedWords: string[]
-    skipDuplicates: boolean
+    min_length?: number
+    max_length?: number
+    required_words?: string[]
+    banned_words?: string[]
+    skip_duplicates?: boolean
   }
-  aiSettings: {
-    rewrite: boolean
-    qualityCheck: boolean
-    seoOptimize: boolean
-    translateTo?: string
+  ai_settings: {
+    rewrite?: boolean
+    quality_check?: boolean
+    seo_optimize?: boolean
+    translate_to?: string
   }
-  postTemplate: {
-    titleTemplate: string
-    contentTemplate: string
-    addTags: boolean
-    setCategory: boolean
-  }
+  created_at?: string
+  updated_at?: string
 }
 
-interface ContentItem {
-  id: string
-  title: string
-  source: string
-  sourceUrl: string
-  campaign: string
-  status: "pending" | "processing" | "scheduled" | "published" | "failed"
-  scheduledTime?: string
-  createdAt: string
-  aiProcessed: boolean
-  category: string
-  estimatedTime?: string
-  errorMessage?: string
-}
-
-interface QuickStats {
-  total: number
-  publishedThisWeek: number
-  scheduled: number
-  failed: number
-  pending: number
-  activeCampaigns: number
-  activeSources: number
-}
-
-// Mock data
-const mockContentSources: ContentSource[] = [
-  {
-    id: "1",
-    name: "OpportunityDesk",
-    domain: "opportunitydesk.org",
-    isActive: true,
-    keywords: ["internship", "scholarship", "fellowship", "competition"],
-    lastScraped: "2024-08-12T14:30:00Z",
-    postsFound: 25,
-    successRate: 92,
-  },
-  {
-    id: "2",
-    name: "ScholarshipDB",
-    domain: "scholarshipdb.net",
-    isActive: true,
-    keywords: ["scholarship", "grant", "funding", "education"],
-    lastScraped: "2024-08-12T16:45:00Z",
-    postsFound: 18,
-    successRate: 88,
-  },
-  {
-    id: "3",
-    name: "TechCrunch Jobs",
-    domain: "techcrunch.com",
-    isActive: false,
-    keywords: ["startup", "tech jobs", "fellowship", "accelerator"],
-    lastScraped: "2024-08-11T09:15:00Z",
-    postsFound: 12,
-    successRate: 75,
-  },
-]
-
-const mockCampaigns: Campaign[] = [
-  {
-    id: "1",
-    name: "Daily Scholarship Hunt",
-    sources: ["1", "2"],
-    keywords: ["scholarship", "grant", "funding"],
-    category: "Scholarships",
-    frequency: 2,
-    frequencyUnit: "hours",
-    isActive: true,
-    maxPosts: 50,
-    currentPosts: 23,
-    filters: {
-      minLength: 100,
-      maxLength: 2000,
-      requiredWords: ["deadline", "apply"],
-      bannedWords: ["expired", "closed"],
-      skipDuplicates: true,
-    },
-    aiSettings: {
-      rewrite: true,
-      qualityCheck: true,
-      seoOptimize: true,
-    },
-    postTemplate: {
-      titleTemplate: "[original_title] - Apply Now",
-      contentTemplate: "[original_content]\n\nApply: [source_url]",
-      addTags: true,
-      setCategory: true,
-    },
-  },
-  {
-    id: "2",
-    name: "Tech Opportunities Tracker",
-    sources: ["1", "3"],
-    keywords: ["internship", "tech", "software", "engineering"],
-    category: "Internships",
-    frequency: 6,
-    frequencyUnit: "hours",
-    isActive: true,
-    maxPosts: 30,
-    currentPosts: 15,
-    filters: {
-      minLength: 150,
-      maxLength: 1500,
-      requiredWords: ["apply", "requirements"],
-      bannedWords: ["expired"],
-      skipDuplicates: true,
-    },
-    aiSettings: {
-      rewrite: true,
-      qualityCheck: true,
-      seoOptimize: false,
-    },
-    postTemplate: {
-      titleTemplate: "[original_title]",
-      contentTemplate: "[original_content]",
-      addTags: false,
-      setCategory: true,
-    },
-  },
-]
-
-const mockContentItems: ContentItem[] = [
-  {
-    id: "1",
-    title: "Software Engineer Internship at Google",
-    source: "OpportunityDesk",
-    sourceUrl: "https://opportunitydesk.org/google-internship",
-    campaign: "Tech Opportunities Tracker",
-    status: "published",
-    scheduledTime: "2024-08-10T14:00:00Z",
-    createdAt: "2024-08-09T10:30:00Z",
-    aiProcessed: true,
-    category: "Internships",
-  },
-  {
-    id: "2",
-    title: "Microsoft Azure Scholarship Program 2024",
-    source: "ScholarshipDB",
-    sourceUrl: "https://scholarshipdb.net/microsoft-azure",
-    campaign: "Daily Scholarship Hunt",
-    status: "scheduled",
-    scheduledTime: "2024-08-13T09:00:00Z",
-    createdAt: "2024-08-12T16:45:00Z",
-    aiProcessed: true,
-    category: "Scholarships",
-  },
-  {
-    id: "3",
-    title: "Y Combinator Startup Fellowship",
-    source: "TechCrunch",
-    sourceUrl: "https://techcrunch.com/yc-fellowship",
-    campaign: "Tech Opportunities Tracker",
-    status: "processing",
-    createdAt: "2024-08-12T18:20:00Z",
-    aiProcessed: false,
-    category: "Fellowships",
-    estimatedTime: "5 min",
-  },
-  {
-    id: "4",
-    title: "NASA Space Exploration Competition",
-    source: "OpportunityDesk",
-    sourceUrl: "https://opportunitydesk.org/nasa-competition",
-    campaign: "Daily Scholarship Hunt",
-    status: "failed",
-    createdAt: "2024-08-12T12:15:00Z",
-    aiProcessed: false,
-    category: "Competitions",
-    errorMessage: "Failed to extract content - source website blocked",
-  },
-  {
-    id: "5",
-    title: "OpenAI Research Grant Program",
-    source: "AI Weekly",
-    sourceUrl: "https://aiweekly.co/openai-grant",
-    campaign: "Daily Scholarship Hunt",
-    status: "pending",
-    createdAt: "2024-08-12T20:30:00Z",
-    aiProcessed: false,
-    category: "Grants",
-  },
-]
-
-const StatusBadge = ({ status }: { status: ContentItem["status"] }) => {
-  const variants = {
-    pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    processing: "bg-blue-100 text-blue-800 border-blue-200",
-    scheduled: "bg-purple-100 text-purple-800 border-purple-200",
-    published: "bg-green-100 text-green-800 border-green-200",
-    failed: "bg-red-100 text-red-800 border-red-200",
-  }
-
-  const icons = {
-    pending: Clock,
-    processing: RefreshCw,
-    scheduled: Calendar,
-    published: CheckCircle,
-    failed: XCircle,
-  }
-
-  const Icon = icons[status]
-
-  return (
-    <Badge variant="outline" className={`${variants[status]} border`}>
-      <Icon className="w-3 h-3 mr-1" />
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </Badge>
-  )
+interface TestResult {
+  success: boolean
+  title?: string
+  content?: string
+  error?: string
+  url?: string
+  responseTime?: number
 }
 
 export function AdminContentManager() {
-  const [selectedItems, setSelectedItems] = useState<string[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [sourceFilter, setSourceFilter] = useState("all")
-  const [activeTab, setActiveTab] = useState("queue")
-  const [importSources, setImportSources] = useState("")
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
-  const [aiSettings, setAiSettings] = useState({
-    autoRewrite: true,
-    qualityCheck: true,
-    seoOptimize: true,
+  const [activeTab, setActiveTab] = useState("campaigns")
+  const [sources, setSources] = useState<ContentSource[]>([])
+  const [campaigns, setCampaigns] = useState<ContentCampaign[]>([])
+  const [loading, setLoading] = useState(false)
+  const [testResults, setTestResults] = useState<Record<string, TestResult>>({})
+  
+  // Modal states
+  const [showSourceModal, setShowSourceModal] = useState(false)
+  const [showCampaignModal, setShowCampaignModal] = useState(false)
+  const [editingSource, setEditingSource] = useState<ContentSource | null>(null)
+  const [editingCampaign, setEditingCampaign] = useState<ContentCampaign | null>(null)
+
+  // Form states
+  const [sourceForm, setSourceForm] = useState({
+    name: '',
+    domain: '',
+    keywords: '',
+    is_active: true,
+    scraping_config: {
+      delay: 1000,
+      max_pages: 10,
+      selectors: {
+        title: '',
+        content: '',
+        description: ''
+      }
+    }
   })
 
-  // Mock processing state
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [processingQueue, setProcessingQueue] = useState(2)
+  const [campaignForm, setCampaignForm] = useState({
+    name: '',
+    category: 'Scholarships',
+    frequency: 6,
+    frequency_unit: 'hours' as const,
+    max_posts: 50,
+    keywords: '',
+    source_ids: [] as string[],
+    filters: {
+      min_length: 100,
+      max_length: 10000,
+      required_words: '',
+      banned_words: '',
+      skip_duplicates: true
+    },
+    ai_settings: {
+      rewrite: true,
+      quality_check: true,
+      seo_optimize: true,
+      translate_to: ''
+    }
+  })
 
-  const contentItems = mockContentItems
-  const contentSources = mockContentSources
-  const campaigns = mockCampaigns
+  const categories = [
+    'Scholarships', 'Fellowships', 'Grants', 'Conferences', 
+    'Competitions', 'Exchange Program', 'Forum', 'Misc'
+  ]
 
-  // Calculate stats
-  const stats: QuickStats = useMemo(() => {
-    const total = contentItems.length
-    const publishedThisWeek = contentItems.filter(
-      (item) => item.status === "published" && 
-      new Date(item.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    ).length
-    const scheduled = contentItems.filter((item) => item.status === "scheduled").length
-    const failed = contentItems.filter((item) => item.status === "failed").length
-    const pending = contentItems.filter((item) => item.status === "pending").length
-    const activeCampaigns = mockCampaigns.filter((campaign) => campaign.isActive).length
-    const activeSources = mockContentSources.filter((source) => source.isActive).length
+  useEffect(() => {
+    loadSources()
+    loadCampaigns()
+  }, [])
 
-    return { total, publishedThisWeek, scheduled, failed, pending, activeCampaigns, activeSources }
-  }, [contentItems])
+  const loadSources = async () => {
+    try {
+      const response = await fetch('/api/content-manager/sources')
+      if (response.ok) {
+        const data = await response.json()
+        setSources(data.sources || [])
+      }
+    } catch (error) {
+      console.error('Failed to load sources:', error)
+    }
+  }
 
-  // Filter content items
-  const filteredItems = useMemo(() => {
-    return contentItems.filter((item) => {
-      const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.source.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesStatus = statusFilter === "all" || item.status === statusFilter
-      const matchesSource = sourceFilter === "all" || item.source === sourceFilter
-      return matchesSearch && matchesStatus && matchesSource
+  const loadCampaigns = async () => {
+    try {
+      const response = await fetch('/api/content-manager/campaigns')
+      if (response.ok) {
+        const data = await response.json()
+        setCampaigns(data.campaigns || [])
+      }
+    } catch (error) {
+      console.error('Failed to load campaigns:', error)
+    }
+  }
+
+  const testSource = async (source: ContentSource | typeof sourceForm) => {
+    const sourceId = 'id' in source ? source.id : 'test'
+    setTestResults(prev => ({ ...prev, [sourceId]: { success: false } }))
+    
+    try {
+      const testUrl = `https://${source.domain}`
+      const response = await fetch('/api/content-manager/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'scrape_single',
+          url: testUrl,
+          config: 'scraping_config' in source ? source.scraping_config : sourceForm.scraping_config
+        })
+      })
+
+      const result = await response.json()
+      
+      setTestResults(prev => ({
+        ...prev,
+        [sourceId]: {
+          success: result.success,
+          title: result.scrapedContent?.title,
+          content: result.scrapedContent?.content?.slice(0, 200) + '...',
+          error: result.error,
+          url: testUrl,
+          responseTime: result.responseTime
+        }
+      }))
+    } catch (error) {
+      setTestResults(prev => ({
+        ...prev,
+        [sourceId]: {
+          success: false,
+          error: error instanceof Error ? error.message : 'Test failed'
+        }
+      }))
+    }
+  }
+
+  const saveSource = async () => {
+    setLoading(true)
+    try {
+      const url = editingSource 
+        ? `/api/content-manager/sources/${editingSource.id}`
+        : '/api/content-manager/sources'
+      
+      const method = editingSource ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...sourceForm,
+          keywords: sourceForm.keywords.split(',').map(k => k.trim()).filter(Boolean)
+        })
+      })
+
+      if (response.ok) {
+        await loadSources()
+        resetSourceForm()
+        setShowSourceModal(false)
+      } else {
+        const error = await response.json()
+        alert(`Failed to save source: ${error.error}`)
+      }
+    } catch (error) {
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const saveCampaign = async () => {
+    setLoading(true)
+    try {
+      const url = editingCampaign 
+        ? `/api/content-manager/campaigns/${editingCampaign.id}`
+        : '/api/content-manager/campaigns'
+      
+      const method = editingCampaign ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...campaignForm,
+          keywords: campaignForm.keywords.split(',').map(k => k.trim()).filter(Boolean),
+          filters: {
+            ...campaignForm.filters,
+            required_words: campaignForm.filters.required_words.split(',').map(w => w.trim()).filter(Boolean),
+            banned_words: campaignForm.filters.banned_words.split(',').map(w => w.trim()).filter(Boolean)
+          }
+        })
+      })
+
+      if (response.ok) {
+        await loadCampaigns()
+        resetCampaignForm()
+        setShowCampaignModal(false)
+      } else {
+        const error = await response.json()
+        alert(`Failed to save campaign: ${error.error}`)
+      }
+    } catch (error) {
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const runCampaign = async (campaignId: string) => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/content-manager/campaigns/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignId, action: 'start' })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        alert(`Campaign started successfully! Run ID: ${result.runId}`)
+        await loadCampaigns()
+      } else {
+        alert(`Failed to start campaign: ${result.error}`)
+      }
+    } catch (error) {
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const deleteSource = async (sourceId: string) => {
+    if (!confirm('Are you sure you want to delete this source?')) return
+    
+    try {
+      const response = await fetch(`/api/content-manager/sources/${sourceId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        await loadSources()
+      } else {
+        alert('Failed to delete source')
+      }
+    } catch (error) {
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const deleteCampaign = async (campaignId: string) => {
+    if (!confirm('Are you sure you want to delete this campaign?')) return
+    
+    try {
+      const response = await fetch(`/api/content-manager/campaigns/${campaignId}`, {
+        method: 'DELETE'
+      })
+      
+      if (response.ok) {
+        await loadCampaigns()
+      } else {
+        alert('Failed to delete campaign')
+      }
+    } catch (error) {
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const editSource = (source: ContentSource) => {
+    setEditingSource(source)
+    setSourceForm({
+      name: source.name,
+      domain: source.domain,
+      keywords: source.keywords.join(', '),
+      is_active: source.is_active,
+      scraping_config: source.scraping_config || {
+        delay: 1000,
+        max_pages: 10,
+        selectors: { title: '', content: '', description: '' }
+      }
     })
-  }, [contentItems, searchQuery, statusFilter, sourceFilter])
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedItems(filteredItems.map((item) => item.id))
-    } else {
-      setSelectedItems([])
-    }
+    setShowSourceModal(true)
   }
 
-  const handleSelectItem = (itemId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedItems([...selectedItems, itemId])
-    } else {
-      setSelectedItems(selectedItems.filter((id) => id !== itemId))
-    }
+  const editCampaign = (campaign: ContentCampaign) => {
+    setEditingCampaign(campaign)
+    setCampaignForm({
+      name: campaign.name,
+      category: campaign.category,
+      frequency: campaign.frequency,
+      frequency_unit: campaign.frequency_unit,
+      max_posts: campaign.max_posts,
+      keywords: campaign.keywords.join(', '),
+      source_ids: campaign.source_ids,
+      filters: {
+        ...campaign.filters,
+        required_words: campaign.filters.required_words?.join(', ') || '',
+        banned_words: campaign.filters.banned_words?.join(', ') || ''
+      },
+      ai_settings: campaign.ai_settings
+    })
+    setShowCampaignModal(true)
   }
 
-  const handleBulkAction = (action: string) => {
-    console.log(`Bulk action: ${action} on items:`, selectedItems)
-    // Implement bulk actions here
-    setSelectedItems([])
+  const resetSourceForm = () => {
+    setSourceForm({
+      name: '',
+      domain: '',
+      keywords: '',
+      is_active: true,
+      scraping_config: {
+        delay: 1000,
+        max_pages: 10,
+        selectors: { title: '', content: '', description: '' }
+      }
+    })
+    setEditingSource(null)
   }
 
-  const handleImportSources = () => {
-    const sources = importSources.split('\n').filter((source: string) => source.trim() !== '')
-    console.log('Importing Sources:', sources)
-    // Implement source import logic here
-    setImportSources("")
-    setIsImportDialogOpen(false)
-  }
-
-  const handleProcessQueue = () => {
-    setIsProcessing(true)
-    // Simulate processing
-    setTimeout(() => {
-      setIsProcessing(false)
-      setProcessingQueue(0)
-    }, 3000)
-  }
-
-  const getUniqueValues = (key: keyof ContentItem) => {
-    return [...new Set(contentItems.map(item => item[key]))]
+  const resetCampaignForm = () => {
+    setCampaignForm({
+      name: '',
+      category: 'Scholarships',
+      frequency: 6,
+      frequency_unit: 'hours',
+      max_posts: 50,
+      keywords: '',
+      source_ids: [],
+      filters: {
+        min_length: 100,
+        max_length: 10000,
+        required_words: '',
+        banned_words: '',
+        skip_duplicates: true
+      },
+      ai_settings: {
+        rewrite: true,
+        quality_check: true,
+        seo_optimize: true,
+        translate_to: ''
+      }
+    })
+    setEditingCampaign(null)
   }
 
   return (
-    <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-white min-h-screen">
-      {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 p-6">
-        <h1 className="text-2xl font-semibold text-slate-800 mb-2">Content Manager</h1>
-        <p className="text-slate-600">
-          Automate content discovery and publishing from various opportunity sources
-        </p>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+            <div>
+          <h2 className="text-2xl font-bold text-gray-900">Content Manager</h2>
+          <p className="text-gray-600">Manage automated content scraping campaigns</p>
+            </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200/60">
-        <div className="border-b border-slate-200/60">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
-            {[
-              { id: "queue", name: "Content Queue", icon: Clock },
-              { id: "sources", name: "Sources", icon: Globe },
-              { id: "campaigns", name: "Campaigns", icon: Target },
-              { id: "settings", name: "AI Settings", icon: Bot },
-            ].map((tab) => {
-              const Icon = tab.icon
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`
-                    flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                    ${
-                      activeTab === tab.id
-                        ? "border-slate-600 text-slate-800"
-                        : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-                    }
-                  `}
-                >
-                  <Icon className="w-4 h-4" />
-                  {tab.name}
-                </button>
-              )
-            })}
-          </nav>
-        </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid grid-cols-2 w-[400px]">
+          <TabsTrigger value="campaigns" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
+            Campaigns
+          </TabsTrigger>
+          <TabsTrigger value="sources" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
+            Sources
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Tab Content */}
-        <div className="p-6">
-          {activeTab === "queue" && (
-            <div className="space-y-6">
-              {/* Quick Actions Card */}
-              <Card className="border-slate-200/60 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-slate-800">
-                    <Zap className="w-5 h-5 text-slate-600" />
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
-                    {/* Stats Cards */}
-                    <div className="space-y-2">
-                      <div className="text-2xl font-bold text-slate-800">{stats.total}</div>
-                      <div className="text-sm text-slate-600">Total Posts</div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-2xl font-bold text-green-600">{stats.publishedThisWeek}</div>
-                      <div className="text-sm text-slate-600">Published This Week</div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-2xl font-bold text-purple-600">{stats.scheduled}</div>
-                      <div className="text-sm text-slate-600">Scheduled</div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-2xl font-bold text-red-600">{stats.failed}</div>
-                      <div className="text-sm text-slate-600">Failed</div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-2xl font-bold text-blue-600">{stats.activeCampaigns}</div>
-                      <div className="text-sm text-slate-600">Active Campaigns</div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-2xl font-bold text-orange-600">{stats.activeSources}</div>
-                      <div className="text-sm text-slate-600">Active Sources</div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-                      <div className="text-sm text-slate-600">Pending</div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-3">
-                    <Button className="bg-slate-800 hover:bg-slate-700 text-white shadow-sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add New Post
-                    </Button>
-
-                    <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-                      <DialogTrigger>
-                        <Button variant="outline" type="button" className="border-slate-300 hover:bg-slate-50">
-                          <Globe className="w-4 h-4 mr-2" />
-                          Add Sources
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>Add Content Sources</DialogTitle>
-                          <p className="text-sm text-muted-foreground mt-2">
-                            Enter website domains (one per line). The system will automatically discover and process relevant content from these sources.
-                          </p>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <Textarea
-                            placeholder="opportunitydesk.org&#10;scholarshipdb.net&#10;techcrunch.com/jobs"
-                            value={importSources}
-                            onChange={(e) => setImportSources(e.target.value)}
-                            className="min-h-[120px]"
-                          />
-                          <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>
-                              Cancel
-                            </Button>
-                            <Button onClick={handleImportSources}>
-                              <Upload className="w-4 h-4 mr-2" />
-                              Import Sources
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-
-                    <Button 
-                      variant="outline"
-                      onClick={handleProcessQueue}
-                      disabled={isProcessing || processingQueue === 0}
-                      className="border-slate-300 hover:bg-slate-50"
-                    >
-                      {isProcessing ? (
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Play className="w-4 h-4 mr-2" />
-                      )}
-                      Process Queue
-                      {processingQueue > 0 && (
-                        <Badge variant="secondary" className="ml-2">
-                          {processingQueue}
-                        </Badge>
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Content Queue Table */}
-              <Card className="border-slate-200/60 shadow-sm">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-slate-800">Content Queue</CardTitle>
-                    {selectedItems.length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-600">
-                          {selectedItems.length} selected
-                        </span>
-                        <Select onValueChange={handleBulkAction}>
-                          <SelectTrigger className="w-[140px]">
-                            <SelectValue placeholder="Bulk Actions" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="publish">Publish Now</SelectItem>
-                            <SelectItem value="schedule">Schedule</SelectItem>
-                            <SelectItem value="delete">Delete</SelectItem>
-                            <SelectItem value="retry">Retry Failed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Search and Filters */}
-                  <div className="flex flex-wrap gap-3">
-                    <div className="relative flex-1 min-w-[200px]">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 h-4 w-4" />
+        {/* Campaigns Tab */}
+        <TabsContent value="campaigns" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Scraping Campaigns</h3>
+            <Dialog open={showCampaignModal} onOpenChange={setShowCampaignModal}>
+              <DialogTrigger asChild>
+                <Button onClick={resetCampaignForm} className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                  Create Campaign
+                  </Button>
+                </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                  <DialogTitle>
+                    {editingCampaign ? 'Edit Campaign' : 'Create New Campaign'}
+                  </DialogTitle>
+                  </DialogHeader>
+                
+                <div className="space-y-6">
+                  {/* Basic Information */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Campaign Name</label>
                       <Input
-                        placeholder="Search content..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 border-slate-300"
+                        value={campaignForm.name}
+                        onChange={(e) => setCampaignForm(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g., Tech Scholarships Weekly"
                       />
                     </div>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-[130px] border-slate-300">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="processing">Processing</SelectItem>
-                        <SelectItem value="scheduled">Scheduled</SelectItem>
-                        <SelectItem value="published">Published</SelectItem>
-                        <SelectItem value="failed">Failed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select value={sourceFilter} onValueChange={setSourceFilter}>
-                      <SelectTrigger className="w-[150px] border-slate-300">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Sources</SelectItem>
-                        {getUniqueValues('source').map((source) => (
-                          <SelectItem key={String(source)} value={String(source)}>
-                            {String(source)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Category</label>
+                      <Select value={campaignForm.category} onValueChange={(value) => setCampaignForm(prev => ({ ...prev, category: value }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map(cat => (
+                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[50px]">
-                          <Checkbox
-                            checked={selectedItems.length === filteredItems.length && filteredItems.length > 0}
-                            onCheckedChange={handleSelectAll}
+
+                  {/* Schedule & Limits */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Run Every</label>
+                      <Input
+                        type="number"
+                        value={campaignForm.frequency}
+                        onChange={(e) => setCampaignForm(prev => ({ ...prev, frequency: parseInt(e.target.value) }))}
+                        min="1"
+                      />
+            </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Time Unit</label>
+                      <Select value={campaignForm.frequency_unit} onValueChange={(value: any) => setCampaignForm(prev => ({ ...prev, frequency_unit: value }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="minutes">Minutes</SelectItem>
+                          <SelectItem value="hours">Hours</SelectItem>
+                          <SelectItem value="days">Days</SelectItem>
+                        </SelectContent>
+                      </Select>
+          </div>
+                <div>
+                      <label className="block text-sm font-medium mb-2">Max Items per Run</label>
+                      <Input
+                        type="number"
+                        value={campaignForm.max_posts}
+                        onChange={(e) => setCampaignForm(prev => ({ ...prev, max_posts: parseInt(e.target.value) }))}
+                        min="1"
+                      />
+                </div>
+              </div>
+          
+                  {/* Source Selection */}
+                <div>
+                    <label className="block text-sm font-medium mb-2">Select Sources</label>
+                    <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded p-3">
+                      {sources.map(source => (
+                        <label key={source.id} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={campaignForm.source_ids.includes(source.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setCampaignForm(prev => ({ 
+                                  ...prev, 
+                                  source_ids: [...prev.source_ids, source.id] 
+                                }))
+                              } else {
+                                setCampaignForm(prev => ({ 
+                                  ...prev, 
+                                  source_ids: prev.source_ids.filter(id => id !== source.id) 
+                                }))
+                              }
+                            }}
                           />
-                        </TableHead>
-                        <TableHead className="text-slate-700">Title</TableHead>
-                        <TableHead className="text-slate-700">Source</TableHead>
-                        <TableHead className="text-slate-700">Status</TableHead>
-                        <TableHead className="text-slate-700">Scheduled</TableHead>
-                        <TableHead className="text-slate-700">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredItems.map((item) => (
-                        <TableRow key={item.id} className="hover:bg-slate-50">
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedItems.includes(item.id)}
-                              onCheckedChange={(checked) => handleSelectItem(item.id, checked as boolean)}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <div className="font-medium truncate max-w-[300px] text-slate-800" title={item.title}>
-                                {item.title}
-                              </div>
-                              <div className="text-sm text-slate-600">
-                                {item.category} • {item.campaign}
-                                {item.aiProcessed && (
-                                  <Badge variant="secondary" className="ml-2 text-xs">
-                                    AI Processed
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <div className="font-medium text-slate-800">{item.source}</div>
-                              <a
-                                href={item.sourceUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-slate-600 hover:text-slate-800 flex items-center gap-1"
-                              >
-                                View Source
-                                <ExternalLink className="w-3 h-3" />
-                              </a>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-2">
-                              <StatusBadge status={item.status} />
-                              {item.status === "processing" && item.estimatedTime && (
-                                <div className="text-xs text-slate-600">
-                                  ~{item.estimatedTime} remaining
-                                </div>
-                              )}
-                              {item.status === "failed" && item.errorMessage && (
-                                <div className="text-xs text-red-600" title={item.errorMessage}>
-                                  {item.errorMessage.substring(0, 30)}...
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {item.scheduledTime ? (
-                              <div className="text-sm">
-                                {new Date(item.scheduledTime).toLocaleDateString()}
-                                <br />
-                                <span className="text-slate-600">
-                                  {new Date(item.scheduledTime).toLocaleTimeString([], { 
-                                    hour: '2-digit', 
-                                    minute: '2-digit' 
-                                  })}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-slate-500">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Button size="sm" variant="ghost" className="hover:bg-slate-100">
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button size="sm" variant="ghost" className="hover:bg-slate-100">
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
+                          <span className="text-sm">{source.name}</span>
+                          <Badge variant={source.is_active ? "default" : "secondary"} className="text-xs">
+                            {source.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                        </label>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                </div>
+                    {sources.length === 0 && (
+                      <p className="text-sm text-gray-500 mt-2">
+                        No sources available. Create sources first in the Sources tab.
+                      </p>
+                    )}
+              </div>
 
-          {/* Sources Tab */}
-          {activeTab === "sources" && (
-            <div className="space-y-6">
-              <Card className="border-slate-200/60 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-slate-800">
-                    <Globe className="w-5 h-5 text-slate-600" />
-                    Content Sources
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {contentSources.map((source) => (
-                      <Card key={source.id} className="border-slate-200/60">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <h3 className="font-medium text-slate-800">{source.name}</h3>
-                            <Badge 
-                              variant={source.isActive ? "default" : "secondary"}
-                              className={source.isActive ? "bg-green-100 text-green-800 border-green-200" : ""}
-                            >
-                              {source.isActive ? "Active" : "Inactive"}
-                            </Badge>
-                          </div>
-                          <div className="space-y-2 text-sm text-slate-600">
-                            <div>Domain: {source.domain}</div>
-                            <div>Posts Found: {source.postsFound}</div>
-                            <div>Success Rate: {source.successRate}%</div>
-                            <div>Last Scraped: {new Date(source.lastScraped).toLocaleDateString()}</div>
-                          </div>
-                          <div className="flex gap-2 mt-4">
-                            <Button size="sm" variant="outline" className="flex-1 border-slate-300">
-                              <Settings className="w-3 h-3 mr-1" />
-                              Configure
-                            </Button>
-                            <Button size="sm" variant="outline" className="border-slate-300">
-                              <Eye className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                  {/* Keywords */}
+                <div>
+                    <label className="block text-sm font-medium mb-2">Keywords (comma-separated)</label>
+                    <Input
+                      value={campaignForm.keywords}
+                      onChange={(e) => setCampaignForm(prev => ({ ...prev, keywords: e.target.value }))}
+                      placeholder="scholarship, funding, education, grant"
+                    />
+                </div>
 
-          {/* Campaigns Tab */}
-          {activeTab === "campaigns" && (
-            <div className="space-y-6">
-              <Card className="border-slate-200/60 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-slate-800">
-                    <Target className="w-5 h-5 text-slate-600" />
-                    Automated Campaigns
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                  {/* Content Filters */}
                   <div className="space-y-4">
-                    {campaigns.map((campaign) => (
-                      <Card key={campaign.id} className="border-slate-200/60">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <h3 className="font-medium text-slate-800">{campaign.name}</h3>
-                              <p className="text-sm text-slate-600">{campaign.category}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge 
-                                variant={campaign.isActive ? "default" : "secondary"}
-                                className={campaign.isActive ? "bg-green-100 text-green-800 border-green-200" : ""}
-                              >
-                                {campaign.isActive ? "Active" : "Paused"}
-                              </Badge>
-                              <Button size="sm" variant="outline" className="border-slate-300">
-                                <Settings className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                            <div>
-                              <div className="text-slate-600">Frequency</div>
-                              <div className="font-medium text-slate-800">
-                                Every {campaign.frequency} {campaign.frequencyUnit}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-slate-600">Progress</div>
-                              <div className="font-medium text-slate-800">
-                                {campaign.currentPosts} / {campaign.maxPosts}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-slate-600">Keywords</div>
-                              <div className="font-medium text-slate-800">
-                                {campaign.keywords.length} terms
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-slate-600">Sources</div>
-                              <div className="font-medium text-slate-800">
-                                {campaign.sources.length} active
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                    <h4 className="font-medium">Content Filters</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                <div>
+                        <label className="block text-sm font-medium mb-2">Min Content Length</label>
+                        <Input
+                          type="number"
+                          value={campaignForm.filters.min_length}
+                          onChange={(e) => setCampaignForm(prev => ({ 
+                            ...prev, 
+                            filters: { ...prev.filters, min_length: parseInt(e.target.value) }
+                          }))}
+                        />
+                </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Max Content Length</label>
+                        <Input
+                          type="number"
+                          value={campaignForm.filters.max_length}
+                          onChange={(e) => setCampaignForm(prev => ({ 
+                            ...prev, 
+                            filters: { ...prev.filters, max_length: parseInt(e.target.value) }
+                          }))}
+                        />
+              </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                <div>
+                        <label className="block text-sm font-medium mb-2">Required Words</label>
+                        <Input
+                          value={campaignForm.filters.required_words}
+                          onChange={(e) => setCampaignForm(prev => ({ 
+                            ...prev, 
+                            filters: { ...prev.filters, required_words: e.target.value }
+                          }))}
+                          placeholder="must, contain, these"
+                        />
+                </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Banned Words</label>
+                        <Input
+                          value={campaignForm.filters.banned_words}
+                          onChange={(e) => setCampaignForm(prev => ({ 
+                            ...prev, 
+                            filters: { ...prev.filters, banned_words: e.target.value }
+                          }))}
+                          placeholder="spam, scam, fake"
+                        />
+              </div>
+                    </div>
+                    <label className="flex items-center space-x-2">
+                      <Switch
+                        checked={campaignForm.filters.skip_duplicates}
+                        onCheckedChange={(checked) => setCampaignForm(prev => ({ 
+                          ...prev, 
+                          filters: { ...prev.filters, skip_duplicates: checked }
+                        }))}
+                      />
+                      <span className="text-sm">Skip duplicate content</span>
+                    </label>
+        </div>
 
-          {/* AI Settings Tab */}
-          {activeTab === "settings" && (
-            <div className="space-y-6">
-              <Card className="border-slate-200/60 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-slate-800">
-                    <Bot className="w-5 h-5 text-slate-600" />
-                    AI Processing Configuration
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h3 className="font-medium text-slate-800">Content Processing</h3>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <label className="text-sm font-medium text-slate-800">Auto-rewrite content</label>
-                            <p className="text-xs text-slate-600">Automatically rewrite content to make it unique</p>
+                  {/* AI Settings */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium">AI Processing Settings</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <label className="flex items-center space-x-2">
+                        <Switch
+                          checked={campaignForm.ai_settings.rewrite}
+                          onCheckedChange={(checked) => setCampaignForm(prev => ({ 
+                            ...prev, 
+                            ai_settings: { ...prev.ai_settings, rewrite: checked }
+                          }))}
+                        />
+                        <span className="text-sm">Rewrite content</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <Switch
+                          checked={campaignForm.ai_settings.quality_check}
+                          onCheckedChange={(checked) => setCampaignForm(prev => ({ 
+                            ...prev, 
+                            ai_settings: { ...prev.ai_settings, quality_check: checked }
+                          }))}
+                        />
+                        <span className="text-sm">Quality check</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <Switch
+                          checked={campaignForm.ai_settings.seo_optimize}
+                          onCheckedChange={(checked) => setCampaignForm(prev => ({ 
+                            ...prev, 
+                            ai_settings: { ...prev.ai_settings, seo_optimize: checked }
+                          }))}
+                        />
+                        <span className="text-sm">SEO optimization</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-4 border-t">
+                    <Button variant="outline" onClick={() => setShowCampaignModal(false)}>
+                      Cancel
+                </Button>
+                    <Button onClick={saveCampaign} disabled={loading || !campaignForm.name || campaignForm.source_ids.length === 0}>
+                      {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                      {editingCampaign ? 'Update Campaign' : 'Create Campaign'}
+                    </Button>
                           </div>
-                          <Switch
-                            checked={aiSettings.autoRewrite}
-                            onCheckedChange={(checked) =>
-                              setAiSettings({ ...aiSettings, autoRewrite: checked })
-                            }
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <label className="text-sm font-medium text-slate-800">Quality check</label>
-                            <p className="text-xs text-slate-600">Validate content quality before publishing</p>
-                          </div>
-                          <Switch
-                            checked={aiSettings.qualityCheck}
-                            onCheckedChange={(checked) =>
-                              setAiSettings({ ...aiSettings, qualityCheck: checked })
-                            }
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <label className="text-sm font-medium text-slate-800">SEO optimize</label>
-                            <p className="text-xs text-slate-600">Optimize content for search engines</p>
-                          </div>
-                          <Switch
-                            checked={aiSettings.seoOptimize}
-                            onCheckedChange={(checked) =>
-                              setAiSettings({ ...aiSettings, seoOptimize: checked })
-                            }
-                          />
-                        </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Campaigns List */}
+          <div className="grid gap-4">
+            {campaigns.map(campaign => (
+              <Card key={campaign.id} className="border-l-4 border-l-blue-500">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                        <Badge variant="outline">{campaign.category}</Badge>
+                        <span>Every {campaign.frequency} {campaign.frequency_unit}</span>
+                        <span>{campaign.current_posts}/{campaign.max_posts} items</span>
+                        <Badge variant={campaign.is_active ? "default" : "secondary"}>
+                          {campaign.is_active ? "Active" : "Inactive"}
+                          </Badge>
                       </div>
                     </div>
-                    
-                    <div className="space-y-4">
-                      <h3 className="font-medium text-slate-800">Processing Queue</h3>
-                      <div className="bg-slate-50 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-slate-800">Current Queue</span>
-                          {isProcessing && (
-                            <RefreshCw className="w-4 h-4 animate-spin text-slate-600" />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => editCampaign(campaign)}
+                      >
+                        <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                        onClick={() => runCampaign(campaign.id)}
+                        disabled={loading || !campaign.is_active}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deleteCampaign(campaign.id)}
+                        className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div>
+                      <span className="text-sm font-medium">Sources: </span>
+                      <span className="text-sm text-gray-600">
+                        {campaign.source_ids.map(sourceId => {
+                          const source = sources.find(s => s.id === sourceId)
+                          return source?.name
+                        }).filter(Boolean).join(', ') || 'No sources'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium">Keywords: </span>
+                      <span className="text-sm text-gray-600">
+                        {campaign.keywords.join(', ') || 'No keywords'}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {campaigns.length === 0 && (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No campaigns yet</h3>
+                  <p className="text-gray-600 mb-4">Create your first scraping campaign to get started</p>
+                  <Button onClick={() => setShowCampaignModal(true)} className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Campaign
+                  </Button>
+              </CardContent>
+            </Card>
+            )}
+          </div>
+          </TabsContent>
+
+        {/* Sources Tab */}
+        <TabsContent value="sources" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Content Sources</h3>
+            <Dialog open={showSourceModal} onOpenChange={setShowSourceModal}>
+              <DialogTrigger asChild>
+                <Button onClick={resetSourceForm} className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Source
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingSource ? 'Edit Source' : 'Add New Source'}
+                  </DialogTitle>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Source Name</label>
+                      <Input
+                        value={sourceForm.name}
+                        onChange={(e) => setSourceForm(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g., MIT Scholarships"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Domain</label>
+                      <Input
+                        value={sourceForm.domain}
+                        onChange={(e) => setSourceForm(prev => ({ ...prev, domain: e.target.value }))}
+                        placeholder="e.g., scholarships.mit.edu"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Keywords (comma-separated)</label>
+                    <Input
+                      value={sourceForm.keywords}
+                      onChange={(e) => setSourceForm(prev => ({ ...prev, keywords: e.target.value }))}
+                      placeholder="scholarship, funding, grant, education"
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="font-medium">Scraping Configuration</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Delay (ms)</label>
+                        <Input
+                          type="number"
+                          value={sourceForm.scraping_config.delay}
+                          onChange={(e) => setSourceForm(prev => ({ 
+                            ...prev, 
+                            scraping_config: { ...prev.scraping_config, delay: parseInt(e.target.value) }
+                          }))}
+                          min="100"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Max Pages</label>
+                        <Input
+                          type="number"
+                          value={sourceForm.scraping_config.max_pages}
+                          onChange={(e) => setSourceForm(prev => ({ 
+                            ...prev, 
+                            scraping_config: { ...prev.scraping_config, max_pages: parseInt(e.target.value) }
+                          }))}
+                          min="1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium">Custom Selectors (optional)</label>
+                      <Input
+                        placeholder="Title selector (e.g., h1, .title)"
+                        value={sourceForm.scraping_config.selectors.title}
+                        onChange={(e) => setSourceForm(prev => ({ 
+                          ...prev, 
+                          scraping_config: { 
+                            ...prev.scraping_config, 
+                            selectors: { ...prev.scraping_config.selectors, title: e.target.value }
+                          }
+                        }))}
+                      />
+                      <Input
+                        placeholder="Content selector (e.g., .content, main)"
+                        value={sourceForm.scraping_config.selectors.content}
+                        onChange={(e) => setSourceForm(prev => ({ 
+                          ...prev, 
+                          scraping_config: { 
+                            ...prev.scraping_config, 
+                            selectors: { ...prev.scraping_config.selectors, content: e.target.value }
+                          }
+                        }))}
+                      />
+                      <Input
+                        placeholder="Description selector (e.g., .description, .summary)"
+                        value={sourceForm.scraping_config.selectors.description}
+                        onChange={(e) => setSourceForm(prev => ({ 
+                          ...prev, 
+                          scraping_config: { 
+                            ...prev.scraping_config, 
+                            selectors: { ...prev.scraping_config.selectors, description: e.target.value }
+                          }
+                        }))}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={sourceForm.is_active}
+                      onCheckedChange={(checked) => setSourceForm(prev => ({ ...prev, is_active: checked }))}
+                    />
+                    <span className="text-sm">Active source</span>
+                    </div>
+
+                  {/* Test Results */}
+                  {testResults['test'] && (
+                    <div className="p-3 border rounded">
+                      <div className="flex items-center gap-2 mb-2">
+                        {testResults['test'].success ? 
+                          <CheckCircle className="w-5 h-5 text-green-600" /> : 
+                          <XCircle className="w-5 h-5 text-red-600" />
+                        }
+                        <span className="font-medium">
+                          {testResults['test'].success ? 'Test Successful' : 'Test Failed'}
+                        </span>
+                    </div>
+                      {testResults['test'].success ? (
+                        <div className="text-sm space-y-1">
+                          <div><strong>Title:</strong> {testResults['test'].title}</div>
+                          <div><strong>Content Preview:</strong> {testResults['test'].content}</div>
+                          {testResults['test'].responseTime && (
+                            <div><strong>Response Time:</strong> {testResults['test'].responseTime}ms</div>
+                          )}
+                    </div>
+                      ) : (
+                        <div className="text-sm text-red-600">
+                          <strong>Error:</strong> {testResults['test'].error}
+                  </div>
+                      )}
+                            </div>
+                  )}
+
+                  <div className="flex justify-between pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      onClick={() => testSource(sourceForm)}
+                      disabled={!sourceForm.domain}
+                    >
+                      <TestTube className="w-4 h-4 mr-2" />
+                      Test Source
+                    </Button>
+                    <div className="flex space-x-3">
+                      <Button variant="outline" onClick={() => setShowSourceModal(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={saveSource} disabled={loading || !sourceForm.name || !sourceForm.domain}>
+                        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                        {editingSource ? 'Update Source' : 'Add Source'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Sources List */}
+          <div className="grid gap-4">
+            {sources.map(source => (
+              <Card key={source.id} className="border-l-4 border-l-green-500">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="font-medium">{source.name}</h4>
+                        <Badge variant={source.is_active ? "default" : "secondary"}>
+                          {source.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                        <a 
+                          href={`https://${source.domain}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </div>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <div><strong>Domain:</strong> {source.domain}</div>
+                        <div><strong>Keywords:</strong> {source.keywords.join(', ') || 'None'}</div>
+                        <div className="flex gap-4">
+                          <span><strong>Posts Found:</strong> {source.posts_found}</span>
+                          <span><strong>Success Rate:</strong> {source.success_rate.toFixed(1)}%</span>
+                          {source.last_scraped && (
+                            <span><strong>Last Scraped:</strong> {new Date(source.last_scraped).toLocaleDateString()}</span>
                           )}
                         </div>
-                        <div className="text-2xl font-bold text-slate-800 mb-1">
-                          {processingQueue} items
-                        </div>
-                        <div className="text-sm text-slate-600">
-                          {isProcessing ? "Processing..." : "Ready to process"}
-                        </div>
-                        <Button 
-                          className="w-full mt-4 bg-slate-800 hover:bg-slate-700" 
-                          disabled={processingQueue === 0}
-                          onClick={handleProcessQueue}
-                        >
-                          <Bot className="w-4 h-4 mr-2" />
-                          {isProcessing ? "Processing..." : "Process Queue"}
-                        </Button>
                       </div>
                     </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => testSource(source)}
+                        disabled={loading}
+                      >
+                        <TestTube className="w-4 h-4" />
+                              </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => editSource(source)}
+                      >
+                        <Edit className="w-4 h-4" />
+                                </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deleteSource(source.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
+                  
+                  {/* Test Results for existing sources */}
+                  {testResults[source.id] && (
+                    <div className="mt-3 p-3 border rounded">
+                      <div className="flex items-center gap-2 mb-2">
+                        {testResults[source.id].success ? 
+                          <CheckCircle className="w-5 h-5 text-green-600" /> : 
+                          <XCircle className="w-5 h-5 text-red-600" />
+                        }
+                        <span className="font-medium">
+                          {testResults[source.id].success ? 'Test Successful' : 'Test Failed'}
+                        </span>
+                      </div>
+                      {testResults[source.id].success ? (
+                        <div className="text-sm space-y-1">
+                          <div><strong>Title:</strong> {testResults[source.id].title}</div>
+                          <div><strong>Content Preview:</strong> {testResults[source.id].content}</div>
+                        </div>
+                      ) : (
+                        <div className="text-sm text-red-600">
+                          <strong>Error:</strong> {testResults[source.id].error}
+                        </div>
+                              )}
+                            </div>
+                  )}
                 </CardContent>
               </Card>
-            </div>
-          )}
-        </div>
-      </div>
+            ))}
+            {sources.length === 0 && (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <Globe className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No sources configured</h3>
+                  <p className="text-gray-600 mb-4">Add websites to scrape content from</p>
+                  <Button onClick={() => setShowSourceModal(true)} className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Source
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+          </TabsContent>
+        </Tabs>
     </div>
   )
 }
