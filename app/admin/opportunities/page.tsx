@@ -1,42 +1,46 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import AdminHeader from "@/components/admin-header"
+import SafeHydrate from "@/components/safe-hydrate"
+import SearchInput from "@/components/search-input"
 import { AdminOpportunities } from "@/components/admin-opportunities"
-import type { Opportunity } from "@/components/OpportunityCard"
+import type { Opportunity } from "@/components/opportunity-card"
+import OpportunitiesLoading from "./loading"
 
 export default function OpportunitiesPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [loading, setLoading] = useState(true)
 
-  const fetchOpportunities = async () => {
+  const fetchOpportunities = async (query = "") => {
     try {
       setLoading(true)
-      const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''
+      const searchParam = query ? `&search=${encodeURIComponent(query)}` : ""
       const response = await fetch(`/api/opportunities?limit=100${searchParam}`)
-      
+
       if (response.ok) {
         const data = await response.json()
-        // Transform data to match expected interface
         const transformedOpportunities = data.opportunities.map((opp: any) => ({
           id: opp.id,
           title: opp.title,
           organization: opp.organization,
-          description: opp.about_opportunity || '',
+          description: opp.about_opportunity || "",
           category: opp.category,
-          location: opp.location || '',
-          deadline: opp.application_deadline || '',
-          url: opp.application_url || opp.website_url || '',
+          location: opp.location || "",
+          deadline: opp.application_deadline || "",
+          url: opp.application_url || opp.website_url || "",
           featured: opp.featured || false,
-          funding: opp.amounts?.min && opp.amounts?.max 
-            ? `$${opp.amounts.min} - $${opp.amounts.max}`
-            : opp.amounts?.min || opp.amounts?.max || 'Not specified',
-          eligibility: opp.requirements || 'See details'
+          amount:
+            opp.amounts?.min && opp.amounts?.max
+              ? `$${opp.amounts.min} - $${opp.amounts.max}`
+              : opp.amounts?.min || opp.amounts?.max || "Not specified",
+          tags: opp.tags || [],
         }))
         setOpportunities(transformedOpportunities)
       }
     } catch (error) {
-      console.error('Error fetching opportunities:', error)
+      console.error("Error fetching opportunities:", error)
     } finally {
       setLoading(false)
     }
@@ -48,33 +52,42 @@ export default function OpportunitiesPage() {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchOpportunities()
-    }, 500) // Debounce search
+      fetchOpportunities(searchQuery)
+    }, 300)
 
     return () => clearTimeout(timeoutId)
   }, [searchQuery])
 
   if (loading) {
-    return (
-      <div className="p-6">
-        <div className="animate-pulse">
-          <h1 className="text-2xl mb-6">Opportunities</h1>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
+    return <OpportunitiesLoading />
   }
 
   return (
-    <AdminOpportunities
-      opportunities={opportunities}
-      onUpdateOpportunities={setOpportunities}
-      searchQuery={searchQuery}
-      onSearchChange={setSearchQuery}
-    />
+    <div className="space-y-6">
+      <div className="rounded-lg border border-border bg-card p-4 sm:p-6">
+        <AdminHeader
+          title="Opportunities"
+          description="Manage all opportunity listings"
+          buttonText="Add Opportunity"
+          buttonLink="/admin/opportunities/add"
+        />
+      </div>
+      <SafeHydrate>
+        <div className="flex gap-4">
+          <SearchInput
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            placeholder="Search opportunities..."
+            className="flex-1 max-w-sm"
+          />
+        </div>
+      </SafeHydrate>
+      <AdminOpportunities
+        opportunities={opportunities}
+        onUpdateOpportunities={setOpportunities}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
+    </div>
   )
 }

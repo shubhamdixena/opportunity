@@ -185,11 +185,11 @@ html {
 
 /* Added glass morphism utility classes for consistent styling across admin pages */
 .glass-card {
-  @apply bg-white/60 backdrop-blur-sm border-slate-200/60 rounded-xl;
+  @apply rounded-xl border-slate-200/60 bg-white/60 backdrop-blur-sm dark:border-slate-800/60 dark:bg-zinc-950/30;
 }
 
 .glass-input {
-  @apply bg-white/60 backdrop-blur-sm border-slate-200/60 rounded-lg;
+  @apply rounded-lg border-slate-200/60 bg-white/60 backdrop-blur-sm dark:border-slate-800/60 dark:bg-zinc-950/30;
 }
 
 /* Custom grid pattern for background */

@@ -6,14 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Badge } from "./ui/badge"
 import { OpportunityCard, type Opportunity } from "./opportunity-card"
 import { useRouter } from "next/navigation"
+import { Category } from "@/lib/data"
 
 interface HomePageProps {
   onPageChange?: (page: string) => void
   featuredOpportunities: Opportunity[]
   onOpportunityClick?: (opportunity: Opportunity) => void
+  categories: Category[]
 }
 
-export function HomePage({ onPageChange, featuredOpportunities, onOpportunityClick }: HomePageProps) {
+export function HomePage({ onPageChange, featuredOpportunities, onOpportunityClick, categories = [] }: HomePageProps) {
   const router = useRouter()
 
   const handlePageChange = (page: string) => {
@@ -31,51 +33,9 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
       router.push(`/opportunity/${opportunity.id}`)
     }
   }
-  const categories = [
-    {
-      id: "scholarships",
-      title: "Scholarships",
-      description: "Educational funding for students worldwide",
-      count: "850+",
-      gradient: "from-blue-500/10 to-cyan-500/10",
-      border: "border-blue-200/50",
-    },
-    {
-      id: "fellowships",
-      title: "Fellowships",
-      description: "Research and professional development programs",
-      count: "420+",
-      gradient: "from-purple-500/10 to-pink-500/10",
-      border: "border-purple-200/50",
-    },
-    {
-      id: "grants",
-      title: "Grants",
-      description: "Funding for projects and startups",
-      count: "650+",
-      gradient: "from-green-500/10 to-emerald-500/10",
-      border: "border-green-200/50",
-    },
-    {
-      id: "conferences",
-      title: "Conferences",
-      description: "Professional networking and learning events",
-      count: "320+",
-      gradient: "from-orange-500/10 to-red-500/10",
-      border: "border-orange-200/50",
-    },
-    {
-      id: "competitions",
-      title: "Competitions",
-      description: "Contests with prizes and recognition",
-      count: "280+",
-      gradient: "from-indigo-500/10 to-blue-500/10",
-      border: "border-indigo-200/50",
-    },
-  ]
 
   return (
-    <div className="min-h-screen bg-background">
+    <div>
       {/* Animated Gradient Styles */}
       <style jsx>{`
         @keyframes gradient-x {
@@ -128,15 +88,6 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
               <Button size="lg" className="px-6 py-4 text-base h-auto" onClick={() => handlePageChange("scholarships")}>
                 Explore Opportunities
                 <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-
-              <Button
-                variant="outline"
-                size="lg"
-                className="px-6 py-4 text-base h-auto bg-transparent"
-                onClick={() => handlePageChange("about")}
-              >
-                Learn More
               </Button>
             </div>
           </div>
@@ -223,7 +174,7 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
               <div
                 key={opportunity.id}
                 className="bg-card border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all duration-300 group"
-                onClick={() => (window.location.href = `/opportunity/${opportunity.id}`)}
+                onClick={() => handleOpportunityClick(opportunity)}
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                   <div className="flex-1">

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { Slot } from "@radix-ui/react-slot"
 
 interface DropdownMenuContextType {
   open: boolean
@@ -20,18 +21,32 @@ const DropdownMenu = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
-const DropdownMenuTrigger = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement>>(
-  ({ children, ...props }, ref) => {
-    const context = React.useContext(DropdownMenuContext)
-    if (!context) throw new Error("DropdownMenuTrigger must be used within DropdownMenu")
+interface DropdownMenuTriggerProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  asChild?: boolean
+}
 
-    return (
-      <button ref={ref} onClick={() => context.setOpen(!context.open)} {...props}>
-        {children}
-      </button>
-    )
-  },
-)
+const DropdownMenuTrigger = React.forwardRef<
+  HTMLButtonElement,
+  DropdownMenuTriggerProps
+>(({ children, asChild = false, ...props }, ref) => {
+  const context = React.useContext(DropdownMenuContext)
+  if (!context) {
+    throw new Error("DropdownMenuTrigger must be used within a DropdownMenu")
+  }
+
+  const Comp = asChild ? Slot : "button"
+
+  return (
+    <Comp
+      ref={ref}
+      onClick={() => context.setOpen(!context.open)}
+      {...props}
+    >
+      {children}
+    </Comp>
+  )
+})
 DropdownMenuTrigger.displayName = "DropdownMenuTrigger"
 
 const DropdownMenuContent = React.forwardRef<
@@ -77,4 +92,22 @@ const DropdownMenuItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<H
 )
 DropdownMenuItem.displayName = "DropdownMenuItem"
 
-export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem }
+const DropdownMenuLabel = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("px-2 py-1.5 text-sm font-semibold", className)}
+    {...props}
+  />
+))
+DropdownMenuLabel.displayName = "DropdownMenuLabel"
+
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+}

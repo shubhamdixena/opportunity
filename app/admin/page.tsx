@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { AdminDashboard } from "@/components/admin-dashboard"
-import type { Opportunity } from "@/components/OpportunityCard"
+import type { Opportunity } from "@/lib/data"
 
 interface AdminStats {
   opportunities: {
@@ -10,13 +10,6 @@ interface AdminStats {
     active: number
     featured: number
     expiringSoon: number
-  }
-  users: {
-    total: number
-    active: number
-    pending: number
-    suspended: number
-    recentlyActive: number
   }
 }
 
@@ -28,55 +21,39 @@ export default function AdminPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch opportunities and stats in parallel
-        const [opportunitiesResponse, statsResponse] = await Promise.all([
-          fetch('/api/opportunities?limit=50'),
-          fetch('/api/admin/stats')
-        ])
+        const opportunitiesResponse = await fetch("/api/opportunities?limit=50")
 
         if (opportunitiesResponse.ok) {
           const data = await opportunitiesResponse.json()
-          // Transform data to match expected interface
-          const transformedOpportunities = data.opportunities.map((opp: any) => ({
-            id: opp.id,
-            title: opp.title,
-            organization: opp.organization,
-            description: opp.about_opportunity || '',
-            category: opp.category,
-            location: opp.location || '',
-            deadline: opp.application_deadline || '',
-            url: opp.application_url || opp.website_url || '',
-            featured: opp.featured || false,
-            funding: opp.amounts?.min && opp.amounts?.max 
-              ? `$${opp.amounts.min} - $${opp.amounts.max}`
-              : opp.amounts?.min || opp.amounts?.max || 'Not specified',
-            eligibility: opp.requirements || 'See details'
-          }))
-          setOpportunities(transformedOpportunities)
-        }
+          setOpportunities(data.opportunities)
 
-        if (statsResponse.ok) {
-          const statsData = await statsResponse.json()
-          // Transform API response to match AdminStats interface
-          const transformedStats: AdminStats = {
-            opportunities: {
-              total: statsData.totalOpportunities || 0,
-              active: statsData.activeOpportunities || 0,
-              featured: 0, // Will be calculated from opportunities data
-              expiringSoon: 0 // Will be calculated from opportunities data
+          // Manually construct stats from the opportunities data
+          const featuredCount = data.opportunities.filter(
+            (opp: Opportunity) => opp.featured,
+          ).length
+          const expiringSoonCount = data.opportunities.filter(
+            (opp: Opportunity) => {
+              if (!opp.application_deadline) return false
+              const deadline = new Date(opp.application_deadline)
+              const now = new Date()
+              const diffDays = Math.ceil(
+                (deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+              )
+              return diffDays <= 7 && diffDays > 0
             },
-            users: {
-              total: statsData.totalUsers || 0,
-              active: 0, // Not provided by current API
-              pending: 0, // Not provided by current API
-              suspended: 0, // Not provided by current API
-              recentlyActive: 0 // Not provided by current API
-            }
-          }
-          setStats(transformedStats)
+          ).length
+
+          setStats({
+            opportunities: {
+              total: data.opportunities.length,
+              active: data.opportunities.length, // Assuming all fetched are active
+              featured: featuredCount,
+              expiringSoon: expiringSoonCount,
+            },
+          })
         }
       } catch (error) {
-        console.error('Error fetching data:', error)
+        console.error("Error fetching data:", error)
       } finally {
         setLoading(false)
       }

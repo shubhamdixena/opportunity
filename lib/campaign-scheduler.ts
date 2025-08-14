@@ -1,5 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
-import { scrapeWebpage, processScrapedContentWithAI } from '@/lib/scraper'
+import {
+  scrapeWebpage,
+  processScrapedContentWithAI,
+  discoverContentUrls,
+} from '@/lib/scraper'
 import { createContentItem, updateContentItem } from '@/lib/content-manager'
 
 export interface CampaignRun {
@@ -86,30 +90,45 @@ export class CampaignScheduler {
         throw new Error(`Failed to get sources: ${sourcesError.message}`)
       }
 
-      // Queue scraping tasks for each source
-      const queueItems = sources.map(source => ({
-        campaign_id: campaignId,
-        source_id: source.id,
-        url: `https://${source.domain}`,
-        priority: 0,
-        status: 'queued' as const,
-        attempts: 0,
-        max_attempts: 3,
-        scheduled_for: new Date().toISOString(),
-        metadata: {
-          campaign_run_id: campaignRun.id,
-          source_keywords: source.keywords,
-          scraping_config: source.scraping_config
+      // Discover and queue scraping tasks for each source
+      const allQueueItems = []
+      for (const source of sources) {
+        const discoveryResult = await discoverContentUrls(
+          `https://${source.domain}`
+        )
+        if (discoveryResult.success && discoveryResult.urls.length > 0) {
+          const queueItems = discoveryResult.urls.map((url) => ({
+            campaign_id: campaignId,
+            source_id: source.id,
+            url: url, // Use discovered URL
+            priority: 0,
+            status: 'queued' as const,
+            attempts: 0,
+            max_attempts: 3,
+            scheduled_for: new Date().toISOString(),
+            metadata: {
+              campaign_run_id: campaignRun.id,
+              source_keywords: source.keywords,
+              scraping_config: source.scraping_config,
+            },
+          }))
+          allQueueItems.push(...queueItems)
+        } else {
+          console.warn(
+            `No URLs discovered for source: ${source.name} (${source.domain})`
+          )
         }
-      }))
+      }
 
-      if (queueItems.length > 0) {
+      if (allQueueItems.length > 0) {
         const { error: queueError } = await supabase
           .from('scraping_queue')
-          .insert(queueItems)
+          .insert(allQueueItems)
 
         if (queueError) {
-          throw new Error(`Failed to queue scraping tasks: ${queueError.message}`)
+          throw new Error(
+            `Failed to queue scraping tasks: ${queueError.message}`
+          )
         }
       }
 
@@ -216,7 +235,7 @@ export class CampaignScheduler {
 
         // Create opportunity if confidence is high enough
         const confidence = this.calculateConfidence(aiResult.data)
-        if (confidence >= 0.7) {
+        if (confidence >= 0.1) {
           await this.createOpportunityFromAI(aiResult.data, contentItem.id)
         }
       }
@@ -294,16 +313,28 @@ export class CampaignScheduler {
   private async createOpportunityFromAI(aiData: any, contentItemId: string): Promise<void> {
     try {
       const supabase = await createClient()
+
+      // Convert camelCase keys from AI to snake_case for the database
+      const snakeCaseData = Object.keys(aiData).reduce((acc, key) => {
+        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        acc[snakeKey] = aiData[key];
+        return acc;
+      }, {} as any);
+
       const { data: opportunity, error } = await supabase
         .from('opportunities')
         .insert([{
-          ...aiData,
+          ...snakeCaseData,
           status: 'draft',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }])
         .select()
         .single()
+
+      if (error) {
+        console.error(`Error creating opportunity for content item ${contentItemId}:`, error)
+      }
 
       if (!error && opportunity) {
         // Link content item to opportunity

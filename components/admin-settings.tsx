@@ -71,7 +71,7 @@ export function AdminSettings() {
         </TabsList>
 
         <TabsContent value="general" className="space-y-8">
-          <Card className="border-0 shadow-sm">
+          <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-base flex items-center gap-2">
                 <Globe className="w-4 h-4" />
@@ -114,7 +114,7 @@ export function AdminSettings() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm">
+          <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-base flex items-center gap-2">
                 <Settings className="w-4 h-4" />
@@ -163,7 +163,7 @@ export function AdminSettings() {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-8">
-          <Card className="border-0 shadow-sm">
+          <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-base flex items-center gap-2">
                 <Users className="w-4 h-4" />
@@ -207,7 +207,7 @@ export function AdminSettings() {
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-8">
-          <Card className="border-0 shadow-sm">
+          <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-base flex items-center gap-2">
                 <Bell className="w-4 h-4" />
@@ -247,7 +247,7 @@ export function AdminSettings() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm">
+          <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-base flex items-center gap-2">
                 <Mail className="w-4 h-4" />
@@ -280,7 +280,7 @@ export function AdminSettings() {
         </TabsContent>
 
         <TabsContent value="security" className="space-y-8">
-          <Card className="border-0 shadow-sm">
+          <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-base flex items-center gap-2">
                 <Shield className="w-4 h-4" />
@@ -310,7 +310,10 @@ export function AdminSettings() {
                     <div className="text-sm">API Status</div>
                     <div className="text-xs text-muted-foreground">Public API endpoints</div>
                   </div>
-                  <Badge variant="secondary" className="bg-green-50 text-green-700">
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                  >
                     Active
                   </Badge>
                 </div>
@@ -323,7 +326,7 @@ export function AdminSettings() {
         </TabsContent>
 
         <TabsContent value="system" className="space-y-8">
-          <Card className="border-0 shadow-sm">
+          <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-base flex items-center gap-2">
                 <Server className="w-4 h-4" />
@@ -332,27 +335,27 @@ export function AdminSettings() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-lg text-green-600">99.9%</div>
+                <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <div className="text-lg text-green-600 dark:text-green-400">99.9%</div>
                   <div className="text-xs text-muted-foreground">Uptime</div>
                 </div>
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-lg text-blue-600">847</div>
+                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="text-lg text-blue-600 dark:text-blue-400">847</div>
                   <div className="text-xs text-muted-foreground">Connections</div>
                 </div>
-                <div className="text-center p-4 bg-orange-50 rounded-lg">
-                  <div className="text-lg text-orange-600">68%</div>
+                <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                  <div className="text-lg text-orange-600 dark:text-orange-400">68%</div>
                   <div className="text-xs text-muted-foreground">Memory</div>
                 </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <div className="text-lg text-purple-600">2.4 GB</div>
+                <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <div className="text-lg text-purple-600 dark:text-purple-400">2.4 GB</div>
                   <div className="text-xs text-muted-foreground">Database</div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm">
+          <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-base flex items-center gap-2">
                 <Database className="w-4 h-4" />
@@ -365,28 +368,39 @@ export function AdminSettings() {
                   <div className="text-sm">Last Backup</div>
                   <div className="text-xs text-muted-foreground">2024-03-11 02:00</div>
                 </div>
-                <Badge variant="secondary" className="bg-green-50 text-green-700">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                >
                   Healthy
                 </Badge>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" className="h-16 flex flex-col gap-1 bg-transparent">
+                <Button
+                  variant="outline"
+                  className="h-16 flex flex-col gap-1 bg-transparent"
+                >
                   <RefreshCw className="w-4 h-4" />
                   <span className="text-xs">Run Backup</span>
                 </Button>
-                <Button variant="outline" className="h-16 flex flex-col gap-1 bg-transparent">
+                <Button
+                  variant="outline"
+                  className="h-16 flex flex-col gap-1 bg-transparent"
+                >
                   <Database className="w-4 h-4" />
                   <span className="text-xs">Optimize DB</span>
                 </Button>
               </div>
 
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="flex items-center gap-2 text-amber-800 mb-1">
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg dark:bg-amber-900/20 dark:border-amber-800/60">
+                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 mb-1">
                   <AlertTriangle className="w-4 h-4" />
                   <span className="text-sm">Maintenance Window</span>
                 </div>
-                <p className="text-xs text-amber-700">Scheduled maintenance: 2:00 AM - 4:00 AM UTC</p>
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  Scheduled maintenance: 2:00 AM - 4:00 AM UTC
+                </p>
               </div>
             </CardContent>
           </Card>

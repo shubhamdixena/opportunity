@@ -1,3 +1,6 @@
+import { z } from "zod"
+import { getOpportunities } from "@/app/api/opportunities/route"
+
 export const opportunitiesData = [
   {
     id: 1,
@@ -99,3 +102,82 @@ export const categoriesData = [
   { name: "Accelerators", href: "/categories/accelerators" },
   { name: "Residencies", href: "/categories/residencies" },
 ]
+
+export const opportunitySchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  organization: z.string(),
+  category: z.string(),
+  location: z.string().optional(),
+  application_deadline: z.string().optional(),
+  application_url: z.string().optional(),
+  website_url: z.string().optional(),
+  featured: z.boolean().optional(),
+  about_opportunity: z.string().optional(),
+  requirements: z.string().optional(),
+  amounts: z
+    .object({
+      min: z.number().optional(),
+      max: z.number().optional(),
+      currency: z.string().optional(),
+    })
+    .optional(),
+})
+export type Opportunity = z.infer<typeof opportunitySchema>
+export type Category = {
+  id: string
+  title: string
+  description: string
+  count: string
+  gradient: string
+  border: string
+}
+export async function getCategories() {
+  const categories = [
+    {
+      id: "scholarships",
+      title: "Scholarships",
+      description: "Educational funding for students worldwide",
+      count: "850+",
+      gradient: "from-blue-500/10 to-cyan-500/10",
+      border: "border-blue-200/50",
+    },
+    {
+      id: "fellowships",
+      title: "Fellowships",
+      description: "Research and professional development programs",
+      count: "420+",
+      gradient: "from-purple-500/10 to-pink-500/10",
+      border: "border-purple-200/50",
+    },
+    {
+      id: "grants",
+      title: "Grants",
+      description: "Funding for projects and startups",
+      count: "650+",
+      gradient: "from-green-500/10 to-emerald-500/10",
+      border: "border-green-200/50",
+    },
+    {
+      id: "conferences",
+      title: "Conferences",
+      description: "Professional networking and learning events",
+      count: "320+",
+      gradient: "from-orange-500/10 to-red-500/10",
+      border: "border-orange-200/50",
+    },
+    {
+      id: "competitions",
+      title: "Competitions",
+      description: "Contests with prizes and recognition",
+      count: "280+",
+      gradient: "from-indigo-500/10 to-blue-500/10",
+      border: "border-indigo-200/50",
+    },
+  ]
+  return categories
+}
+export async function getFeaturedOpportunities() {
+  const { opportunities } = await getOpportunities({ featured: true, limit: 3 })
+  return opportunities
+}

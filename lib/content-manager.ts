@@ -220,6 +220,24 @@ export async function getContentItems(filters?: {
   return data || []
 }
 
+export async function getContentItem(id: string): Promise<ContentItem | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('content_items')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) {
+    if (error.code === 'PGRST116') { // PostgREST error for no rows found
+      return null
+    }
+    throw error
+  }
+
+  return data
+}
+
 export async function createContentItem(item: Omit<ContentItem, 'id' | 'created_at' | 'updated_at'>): Promise<ContentItem> {
   const supabase = await createClient()
   const { data, error } = await supabase

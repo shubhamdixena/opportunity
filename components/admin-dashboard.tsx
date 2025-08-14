@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "./ui/card"
 import { Button } from "./ui/button"
-import type { Opportunity } from "./opportunity-card"
+import { Opportunity } from "@/lib/data"
 import { TrendingUp, Users, Briefcase, Calendar, Plus, ArrowRight } from "lucide-react"
 import { useMemo } from "react"
 import { useRouter } from "next/navigation"
@@ -10,17 +10,30 @@ import { useRouter } from "next/navigation"
 interface AdminDashboardProps {
   opportunities: Opportunity[]
   onPageChange: (page: string) => void
+  stats: {
+    opportunities: {
+      total: number
+      active: number
+      featured: number
+      expiringSoon: number
+    }
+  } | null
 }
 
-export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardProps) {
+export function AdminDashboard({
+  opportunities,
+  onPageChange,
+  stats: adminStats,
+}: AdminDashboardProps) {
   const router = useRouter()
-  
+
   const stats = useMemo(() => {
     const total = opportunities.length
     const featured = opportunities.filter((opp) => opp.featured).length
 
     const expiringSoon = opportunities.filter((opp) => {
-      const deadline = new Date(opp.deadline)
+      if (!opp.application_deadline) return false
+      const deadline = new Date(opp.application_deadline)
       const now = new Date()
       const diffDays = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       return diffDays <= 7 && diffDays > 0
@@ -30,7 +43,7 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
   }, [opportunities])
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl mb-2">Dashboard</h1>
@@ -39,31 +52,23 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
 
       {/* Key Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-sm">
+        <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Total Opportunities</p>
-                <p className="text-2xl">{stats.total}</p>
+                <p className="text-sm text-muted-foreground mb-1">
+                  Total Opportunities
+                </p>
+                <p className="text-2xl">
+                  {adminStats?.opportunities.total ?? "..."}
+                </p>
               </div>
               <Briefcase className="h-5 w-5 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Active Users</p>
-                <p className="text-2xl">2,847</p>
-              </div>
-              <Users className="h-5 w-5 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
+        <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -75,12 +80,14 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm">
+        <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Expiring Soon</p>
-                <p className="text-2xl text-orange-600">{stats.expiringSoon}</p>
+                <p className="text-sm text-muted-foreground mb-1">
+                  Expiring Soon
+                </p>
+                <p className="text-2xl text-orange-600 dark:text-orange-400">{stats.expiringSoon}</p>
               </div>
               <Calendar className="h-5 w-5 text-orange-500" />
             </div>
@@ -107,24 +114,6 @@ export function AdminDashboard({ opportunities, onPageChange }: AdminDashboardPr
             onClick={() => router.push("/admin/opportunities")}
           >
             <span>Manage Opportunities</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="outline"
-            className="h-16 justify-between bg-transparent"
-            onClick={() => router.push("/admin/users")}
-          >
-            <span>User Management</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="outline"
-            className="h-16 justify-between bg-transparent"
-            onClick={() => router.push("/admin/analytics")}
-          >
-            <span>View Analytics</span>
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>

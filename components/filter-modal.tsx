@@ -14,10 +14,13 @@ interface FilterModalProps {
   onLocationChange: (locations: string[]) => void
   selectedDeadlines: string[]
   onDeadlineChange: (deadlines: string[]) => void
+  fundingTypes: string[]
   selectedFundingTypes: string[]
   onFundingTypeChange: (types: string[]) => void
+  eligibility: string[]
   selectedEligibility: string[]
   onEligibilityChange: (eligibility: string[]) => void
+  countries: string[]
   selectedCountries: string[]
   onCountryChange: (countries: string[]) => void
   onClearAll: () => void
@@ -29,34 +32,20 @@ export function FilterModal({
   onLocationChange,
   selectedDeadlines,
   onDeadlineChange,
+  fundingTypes,
   selectedFundingTypes,
   onFundingTypeChange,
+  eligibility,
   selectedEligibility,
   onEligibilityChange,
+  countries,
   selectedCountries,
   onCountryChange,
   onClearAll,
 }: FilterModalProps) {
   const [isOpen, setIsOpen] = useState(false)
 
-  const deadlineOptions = ["Next 7 days", "Next 30 days", "Next 3 months", "Next 6 months", "More than 6 months"]
-
-  const fundingTypeOptions = ["Full funding", "Partial funding", "Stipend only", "No funding"]
-
-  const eligibilityOptions = ["Undergraduate", "Graduate", "PhD", "Postdoc", "Professional", "Any level"]
-
-  const countryOptions = [
-    "United States",
-    "United Kingdom",
-    "Canada",
-    "Australia",
-    "Germany",
-    "France",
-    "Netherlands",
-    "Switzerland",
-    "Singapore",
-    "Japan",
-  ]
+  const deadlineOptions = ["next-week", "next-month"]
 
   const handleLocationToggle = (location: string) => {
     const updated = selectedLocations.includes(location)
@@ -172,7 +161,7 @@ export function FilterModal({
           <div>
             <h4 className="font-medium mb-3">Funding Type</h4>
             <div className="grid grid-cols-2 gap-2">
-              {fundingTypeOptions.map((type) => (
+              {fundingTypes.map((type) => (
                 <div key={type} className="flex items-center space-x-2">
                   <Checkbox
                     id={`funding-${type}`}
@@ -193,7 +182,7 @@ export function FilterModal({
           <div>
             <h4 className="font-medium mb-3">Eligibility</h4>
             <div className="grid grid-cols-2 gap-2">
-              {eligibilityOptions.map((eligibility) => (
+              {eligibility.map((eligibility) => (
                 <div key={eligibility} className="flex items-center space-x-2">
                   <Checkbox
                     id={`eligibility-${eligibility}`}
@@ -214,7 +203,7 @@ export function FilterModal({
           <div>
             <h4 className="font-medium mb-3">Country</h4>
             <div className="grid grid-cols-2 gap-2">
-              {countryOptions.map((country) => (
+              {countries.map((country) => (
                 <div key={country} className="flex items-center space-x-2">
                   <Checkbox
                     id={`country-${country}`}

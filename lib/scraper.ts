@@ -1,4 +1,5 @@
 import { processContentWithAI } from '@/lib/ai/gemini'
+import * as cheerio from 'cheerio'
 
 // Types for scraping
 export interface ScrapingConfig {
@@ -116,35 +117,36 @@ export async function scrapeWebpage(url: string, config?: Partial<ScrapingConfig
 
 // Basic content extraction using regex and simple parsing
 function extractContent(html: string, selectors?: ScrapingConfig['selectors']) {
-  // Remove scripts and styles
-  const cleanHtml = html
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+  const $ = cheerio.load(html)
+
+  // Extract title
+  const title = selectors?.title ? $(selectors.title).first().text().trim() : $('title').first().text().trim()
+
+  // Extract meta description
+  const description = selectors?.description ? $(selectors.description).first().text().trim() : $('meta[name="description"]').attr('content') || ''
+
+  // Extract content
+  const content = selectors?.content ? $(selectors.content).text().trim() : $('body').text().trim()
+
+  // Remove scripts and styles from content
+  const cleanContent = content.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
 
-  // Extract title
-  const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i)
-  const title = titleMatch ? titleMatch[1].replace(/&[^;]+;/g, '').trim() : ''
-
-  // Extract meta description
-  const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*?)["'][^>]*>/i)
-  const description = descMatch ? descMatch[1] : ''
-
   // Look for common opportunity-related patterns
-  const content = extractOpportunityInfo(cleanHtml)
+  const opportunityInfo = extractOpportunityInfo(cleanContent)
 
   return {
     title,
-    content: cleanHtml.slice(0, 3000), // Limit content length
+    content: cleanContent.slice(0, 5000), // Limit content length
     description,
-    organization: content.organization,
-    deadline: content.deadline,
-    location: content.location,
-    amount: content.amount,
-    requirements: content.requirements,
-    apply_info: content.apply_info
+    organization: selectors?.organization ? $(selectors.organization).first().text().trim() : opportunityInfo.organization,
+    deadline: selectors?.deadline ? $(selectors.deadline).first().text().trim() : opportunityInfo.deadline,
+    location: selectors?.location ? $(selectors.location).first().text().trim() : opportunityInfo.location,
+    amount: selectors?.amount ? $(selectors.amount).first().text().trim() : opportunityInfo.amount,
+    requirements: selectors?.requirements ? $(selectors.requirements).first().text().trim() : opportunityInfo.requirements,
+    apply_info: selectors?.apply_info ? $(selectors.apply_info).first().text().trim() : opportunityInfo.apply_info
   }
 }
 
@@ -236,7 +238,7 @@ export async function processScrapedContentWithAI(scrapedContent: ScrapedContent
       scrapedContent.url
     )
 
-    if (!result.success) {
+    if (!result.success && result.error?.includes('Invalid JSON')) {
       // Fallback: create basic opportunity data
       return {
         success: true,

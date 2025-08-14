@@ -39,10 +39,24 @@ export function CategoryPage({
     return opportunities.filter((opp) => opp.category.toLowerCase() === category.toLowerCase())
   }, [opportunities, category])
 
-  // Get unique locations for filters
   const locations = useMemo(() => {
     const uniqueLocations = [...new Set(categoryOpportunities.map((opp) => opp.location))]
     return uniqueLocations.sort()
+  }, [categoryOpportunities])
+
+  const fundingTypes = useMemo(() => {
+    const uniqueFundingTypes = [...new Set(categoryOpportunities.map((opp) => opp.type))]
+    return uniqueFundingTypes.sort()
+  }, [categoryOpportunities])
+
+  const eligibility = useMemo(() => {
+    const uniqueEligibility = [...new Set(categoryOpportunities.flatMap((opp) => opp.eligibility))]
+    return uniqueEligibility.sort()
+  }, [categoryOpportunities])
+
+  const countries = useMemo(() => {
+    const uniqueCountries = [...new Set(categoryOpportunities.map((opp) => opp.country))]
+    return uniqueCountries.sort()
   }, [categoryOpportunities])
 
   // Apply filters and search
@@ -59,12 +73,49 @@ export function CategoryPage({
       // Location filter
       const matchesLocation = selectedLocations.length === 0 || selectedLocations.includes(opportunity.location)
 
-      // Note: For demo purposes, we're only filtering by search and location
-      // In a real app, you'd also filter by deadlines, funding types, etc.
+      const matchesDeadline =
+        selectedDeadlines.length === 0 ||
+        selectedDeadlines.some((deadline) => {
+          const now = new Date()
+          const opportunityDeadline = new Date(opportunity.deadline)
+          if (deadline === "next-week") {
+            const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+            return opportunityDeadline > now && opportunityDeadline <= nextWeek
+          }
+          if (deadline === "next-month") {
+            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate())
+            return opportunityDeadline > now && opportunityDeadline <= nextMonth
+          }
+          return true
+        })
 
-      return matchesSearch && matchesLocation
+      const matchesFundingType =
+        selectedFundingTypes.length === 0 || selectedFundingTypes.includes(opportunity.type)
+
+      const matchesEligibility =
+        selectedEligibility.length === 0 ||
+        selectedEligibility.some((el) => opportunity.eligibility.includes(el))
+
+      const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(opportunity.country)
+
+      return (
+        matchesSearch &&
+        matchesLocation &&
+        matchesDeadline &&
+        matchesFundingType &&
+        matchesEligibility &&
+        matchesCountry
+      )
     })
-  }, [categoryOpportunities, searchQuery, selectedLocations])
+  }, [
+    categoryOpportunities,
+    searchQuery,
+    selectedLocations,
+    selectedDeadlines,
+    selectedFundingTypes,
+    selectedEligibility,
+    selectedCountries,
+  ])
 
   // Sort opportunities
   const sortedOpportunities = useMemo(() => {
@@ -173,10 +224,13 @@ export function CategoryPage({
               onLocationChange={setSelectedLocations}
               selectedDeadlines={selectedDeadlines}
               onDeadlineChange={setSelectedDeadlines}
+              fundingTypes={fundingTypes}
               selectedFundingTypes={selectedFundingTypes}
               onFundingTypeChange={setSelectedFundingTypes}
+              eligibility={eligibility}
               selectedEligibility={selectedEligibility}
               onEligibilityChange={setSelectedEligibility}
+              countries={countries}
               selectedCountries={selectedCountries}
               onCountryChange={setSelectedCountries}
               onClearAll={clearAllFilters}
@@ -243,7 +297,7 @@ export function CategoryPage({
                       {featuredOpportunities.map((opportunity) => (
                         <div
                           key={opportunity.id}
-                          onClick={() => (window.location.href = `/opportunity/${opportunity.id}`)}
+                          onClick={() => onOpportunityClick(opportunity)}
                           className="cursor-pointer"
                         >
                           {viewMode === "grid" ? (
@@ -304,7 +358,7 @@ export function CategoryPage({
                       {regularOpportunities.map((opportunity) => (
                         <div
                           key={opportunity.id}
-                          onClick={() => (window.location.href = `/opportunity/${opportunity.id}`)}
+                          onClick={() => onOpportunityClick(opportunity)}
                           className="cursor-pointer"
                         >
                           {viewMode === "grid" ? (
@@ -357,7 +411,7 @@ export function CategoryPage({
                   {featuredOpportunities.map((opportunity) => (
                     <div
                       key={opportunity.id}
-                      onClick={() => (window.location.href = `/opportunity/${opportunity.id}`)}
+                      onClick={() => onOpportunityClick(opportunity)}
                       className="cursor-pointer"
                     >
                       <OpportunityCard opportunity={opportunity} />

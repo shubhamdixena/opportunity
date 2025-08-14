@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { HomePage } from "@/components/home-page"
 import { Navigation } from "@/components/navigation"
 import type { Opportunity } from "@/components/opportunity-card"
+import { getCategories, getFeaturedOpportunities } from "@/lib/data"
 
 async function getOpportunities(): Promise<Opportunity[]> {
   try {
@@ -45,13 +46,14 @@ async function getOpportunities(): Promise<Opportunity[]> {
 // Enable static generation with revalidation for better performance
 export const revalidate = 300 // 5 minutes
 
-export default async function App() {
-  const opportunities = await getOpportunities()
+export default async function Page() {
+  const featuredOpportunities = await getFeaturedOpportunities()
+  const categories = await getCategories()
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation currentPage="home" showSearch={false} />
-      <HomePage featuredOpportunities={opportunities} />
+      <HomePage featuredOpportunities={featuredOpportunities} categories={categories} />
     </div>
   )
 }

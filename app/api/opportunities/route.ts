@@ -2,61 +2,99 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getConditionalCacheHeaders } from '@/lib/cache'
 
+export async function getOpportunities({
+  page = 1,
+  limit = 10,
+  category,
+  search,
+  status = "active",
+  featured,
+}: {
+  page?: number
+  limit?: number
+  category?: string
+  search?: string
+  status?: string
+  featured?: boolean
+}) {
+  const supabase = await createClient()
+
+  let query = supabase
+    .from("opportunities")
+    .select("*")
+    .eq("status", status)
+    .order("created_at", { ascending: false })
+
+  if (category && category !== "all") {
+    query = query.eq("category", category)
+  }
+
+  if (search) {
+    query = query.or(
+      `title.ilike.%${search}%,organization.ilike.%${search}%,about_opportunity.ilike.%${search}%`,
+    )
+  }
+
+  if (featured) {
+    query = query.eq("featured", true)
+  }
+
+  const from = (page - 1) * limit
+  const to = from + limit - 1
+
+  const { data: opportunities, error, count } = await query.range(from, to)
+
+  if (error) {
+    console.error("Error fetching opportunities:", error)
+    return { opportunities: [], pagination: {} }
+  }
+
+  return {
+    opportunities: opportunities || [],
+    pagination: {
+      page,
+      limit,
+      total: count || 0,
+      totalPages: Math.ceil((count || 0) / limit),
+    },
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
     const { searchParams } = new URL(request.url)
-    
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const category = searchParams.get('category')
-    const search = searchParams.get('search')
-    const status = searchParams.get('status') || 'active'
-    
-    let query = supabase
-      .from('opportunities')
-      .select('*')
-      .eq('status', status)
-      .order('created_at', { ascending: false })
 
-    if (category && category !== 'all') {
-      query = query.eq('category', category)
-    }
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = parseInt(searchParams.get("limit") || "10")
+    const category = searchParams.get("category")
+    const search = searchParams.get("search")
+    const status = searchParams.get("status") || "active"
+    const featured = searchParams.has("featured")
 
-    if (search) {
-      query = query.or(`title.ilike.%${search}%,organization.ilike.%${search}%,about_opportunity.ilike.%${search}%`)
-    }
-
-    // Add pagination
-    const from = (page - 1) * limit
-    const to = from + limit - 1
-    
-    const { data: opportunities, error, count } = await query
-      .range(from, to)
-
-    if (error) {
-      console.error('Error fetching opportunities:', error)
-      return NextResponse.json({ error: 'Failed to fetch opportunities' }, { status: 500 })
-    }
+    const { opportunities, pagination } = await getOpportunities({
+      page,
+      limit,
+      category: category || undefined,
+      search: search || undefined,
+      status,
+      featured,
+    })
 
     const response = NextResponse.json({
-      opportunities: opportunities || [],
-      pagination: {
-        page,
-        limit,
-        total: count || 0,
-        totalPages: Math.ceil((count || 0) / limit)
-      }
+      opportunities,
+      pagination,
     })
 
     // Set conditional caching headers
-    const hasFilters = category && category !== 'all'
-    response.headers.set('Cache-Control', getConditionalCacheHeaders(!!search, hasFilters))
-    
-    return response
+    const hasFilters = category && category !== "all"
+    response.headers.set(
+      "Cache-Control",
+      getConditionalCacheHeaders(!!search, hasFilters),
+    )
 
+    return response
   } catch (error) {
-    console.error('Error in opportunities API:', error)
+    console.error("Error in opportunities API:", error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

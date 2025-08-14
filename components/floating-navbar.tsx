@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Settings, ChevronDown } from "lucide-react"
 import { categoriesData } from "@/lib/data"
+import { ThemeToggle } from "./theme-toggle"
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -65,6 +66,7 @@ export default function Navbar() {
                 <Settings className="h-4 w-4" />
               </Button>
             </Link>
+            <ThemeToggle />
           </div>
 
           {/* Mobile Menu Button */}
@@ -110,6 +112,9 @@ export default function Navbar() {
                 <Settings className="h-4 w-4" />
                 Admin
               </Link>
+              <div className="pl-4">
+                <ThemeToggle />
+              </div>
             </div>
           </div>
         )}

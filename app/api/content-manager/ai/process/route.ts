@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { processContentWithAI, generateContentSuggestions, extractKeywords, generateMetaDescription } from '@/lib/ai/gemini'
-import { createAIProcessingJob, updateAIProcessingJob, getContentItems, updateContentItem } from '@/lib/content-manager'
+import {
+  processContentWithAI,
+  generateContentSuggestions,
+  extractKeywords,
+  generateMetaDescription
+} from '@/lib/ai/gemini'
+import {
+  createAIProcessingJob,
+  updateAIProcessingJob,
+  getContentItem,
+  updateContentItem
+} from '@/lib/content-manager'
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,9 +53,8 @@ async function processContent(data: {
   const { contentItemId, options } = data
 
   // Get content item
-  const contentItems = await getContentItems({ limit: 1 })
-  const contentItem = contentItems.find(item => item.id === contentItemId)
-  
+  const contentItem = await getContentItem(contentItemId)
+
   if (!contentItem) {
     return NextResponse.json(
       { error: 'Content item not found' },
