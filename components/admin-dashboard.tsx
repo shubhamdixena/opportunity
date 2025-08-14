@@ -43,10 +43,35 @@ export function AdminDashboard({ opportunities, stats: adminStats, onPageChange 
     return { total, featured, expiringSoon }
   }, [opportunities])
 
-  // Use admin stats if available, otherwise use calculated stats
-  const displayStats = adminStats || {
-    opportunities: opportunityStats,
-    users: { total: 0, active: 0, pending: 0, suspended: 0, recentlyActive: 0 }
+  // Transform API stats to expected format or use calculated fallback
+  const displayStats = adminStats ? {
+    opportunities: {
+      total: adminStats.opportunities?.total || 0,
+      active: adminStats.opportunities?.active || 0,
+      featured: adminStats.opportunities?.featured || opportunityStats.featured,
+      expiringSoon: adminStats.opportunities?.expiringSoon || opportunityStats.expiringSoon
+    },
+    users: {
+      total: adminStats.users?.total || 0,
+      active: adminStats.users?.active || 0,
+      pending: adminStats.users?.pending || 0,
+      suspended: adminStats.users?.suspended || 0,
+      recentlyActive: adminStats.users?.recentlyActive || 0
+    }
+  } : {
+    opportunities: {
+      total: opportunityStats.total,
+      active: opportunityStats.total, // Assume all calculated opportunities are active
+      featured: opportunityStats.featured,
+      expiringSoon: opportunityStats.expiringSoon
+    },
+    users: { 
+      total: 0, 
+      active: 0, 
+      pending: 0, 
+      suspended: 0, 
+      recentlyActive: 0 
+    }
   }
 
   return (

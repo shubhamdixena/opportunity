@@ -57,7 +57,23 @@ export default function AdminPage() {
 
         if (statsResponse.ok) {
           const statsData = await statsResponse.json()
-          setStats(statsData)
+          // Transform API response to match AdminStats interface
+          const transformedStats: AdminStats = {
+            opportunities: {
+              total: statsData.totalOpportunities || 0,
+              active: statsData.activeOpportunities || 0,
+              featured: 0, // Will be calculated from opportunities data
+              expiringSoon: 0 // Will be calculated from opportunities data
+            },
+            users: {
+              total: statsData.totalUsers || 0,
+              active: 0, // Not provided by current API
+              pending: 0, // Not provided by current API
+              suspended: 0, // Not provided by current API
+              recentlyActive: 0 // Not provided by current API
+            }
+          }
+          setStats(transformedStats)
         }
       } catch (error) {
         console.error('Error fetching data:', error)
