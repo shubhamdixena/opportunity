@@ -84,18 +84,15 @@ export function Navigation({
 
             <nav className="hidden md:flex items-center space-x-6">
               <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Button
-                    variant={isBrowseActive ? "secondary" : "ghost"}
-                    className={`text-sm ${
-                      isBrowseActive
-                        ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                        : "hover:bg-accent hover:text-accent-foreground"
-                    } h-10 px-4 py-2`}
-                  >
-                    Browse
-                    <ChevronDown className="ml-1 w-4 h-4" />
-                  </Button>
+                <DropdownMenuTrigger
+                  className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 ${
+                    isBrowseActive
+                      ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                      : "hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                >
+                  Browse
+                  <ChevronDown className="ml-1 w-4 h-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-80 p-2">
                   {categories.map((category) => (
