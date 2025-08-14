@@ -53,6 +53,7 @@ export interface ContentItem {
   id: string
   title: string
   content?: string
+  raw_html?: string
   source_name?: string
   source_url?: string
   campaign_id?: string
@@ -61,6 +62,9 @@ export interface ContentItem {
   created_at: string
   updated_at?: string
   ai_processed: boolean
+  extraction_confidence?: number
+  ai_model_version?: string
+  extraction_metadata?: any
   category?: string
   estimated_time?: string
   error_message?: string
@@ -183,6 +187,7 @@ export async function getContentItems(filters?: {
   limit?: number
   offset?: number
 }): Promise<ContentItem[]> {
+  const supabase = await createClient()
   let query = supabase
     .from('content_items')
     .select('*')
@@ -216,6 +221,7 @@ export async function getContentItems(filters?: {
 }
 
 export async function createContentItem(item: Omit<ContentItem, 'id' | 'created_at' | 'updated_at'>): Promise<ContentItem> {
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('content_items')
     .insert([item])
@@ -227,6 +233,7 @@ export async function createContentItem(item: Omit<ContentItem, 'id' | 'created_
 }
 
 export async function updateContentItem(id: string, updates: Partial<ContentItem>): Promise<ContentItem> {
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('content_items')
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -239,6 +246,7 @@ export async function updateContentItem(id: string, updates: Partial<ContentItem
 }
 
 export async function deleteContentItem(id: string): Promise<void> {
+  const supabase = await createClient()
   const { error } = await supabase
     .from('content_items')
     .delete()
@@ -248,6 +256,7 @@ export async function deleteContentItem(id: string): Promise<void> {
 }
 
 export async function bulkUpdateContentItems(ids: string[], updates: Partial<ContentItem>): Promise<void> {
+  const supabase = await createClient()
   const { error } = await supabase
     .from('content_items')
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -258,6 +267,7 @@ export async function bulkUpdateContentItems(ids: string[], updates: Partial<Con
 
 // AI Processing Jobs Functions
 export async function createAIProcessingJob(job: Omit<AIProcessingJob, 'id' | 'created_at' | 'updated_at'>): Promise<AIProcessingJob> {
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('ai_processing_jobs')
     .insert([job])
@@ -269,6 +279,7 @@ export async function createAIProcessingJob(job: Omit<AIProcessingJob, 'id' | 'c
 }
 
 export async function getAIProcessingJobs(contentItemId?: string): Promise<AIProcessingJob[]> {
+  const supabase = await createClient()
   let query = supabase
     .from('ai_processing_jobs')
     .select('*')
@@ -286,6 +297,7 @@ export async function getAIProcessingJobs(contentItemId?: string): Promise<AIPro
 }
 
 export async function updateAIProcessingJob(id: string, updates: Partial<AIProcessingJob>): Promise<AIProcessingJob> {
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from('ai_processing_jobs')
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -337,6 +349,7 @@ export async function getContentStats() {
 // Utility function to convert opportunities to content items
 export async function createContentItemFromOpportunity(opportunityId: string): Promise<ContentItem> {
   // Get opportunity data
+  const supabase = await createClient()
   const { data: opportunity, error: oppError } = await supabase
     .from('opportunities')
     .select('*')
