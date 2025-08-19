@@ -24,7 +24,7 @@ The new simplified campaign system replaces the complex multi-campaign approach 
 
 ## File Structure
 
-```
+\`\`\`
 /app/api/campaign/
   ├── route.ts              # Main campaign CRUD operations
   └── run/
@@ -37,7 +37,7 @@ The new simplified campaign system replaces the complex multi-campaign approach 
   └── simple-campaign-manager.tsx  # Main campaign management UI
 
 setup-simple-campaign.sql   # Database migration script
-```
+\`\`\`
 
 ## Database Schema
 

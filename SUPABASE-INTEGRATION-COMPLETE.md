@@ -16,9 +16,9 @@ Three powerful Edge Functions are now live and running:
 
 ### 2. **Enhanced Application Architecture**
 
-```
+\`\`\`
 Frontend Components → Next.js API Routes → Supabase Edge Functions → Database
-```
+\`\`\`
 
 - **Frontend**: Enhanced scraping dashboard with real-time stats
 - **API Layer**: RESTful endpoints for scraping operations
@@ -81,7 +81,7 @@ Access the enhanced scraping dashboard at:
 ## 🔧 How to Use
 
 ### 1. **Add a New Source**
-```typescript
+\`\`\`typescript
 // Via the dashboard or API
 const source = await ScrapingService.createSource({
   name: 'Example Site',
@@ -90,30 +90,30 @@ const source = await ScrapingService.createSource({
   source_type: 'website',
   is_active: true
 });
-```
+\`\`\`
 
 ### 2. **Test Source Discovery**
-```typescript
+\`\`\`typescript
 // Test post discovery
 const result = await ScrapingService.testSource('https://example.com');
 console.log(`Found ${result.discoveredPosts} posts`);
-```
+\`\`\`
 
 ### 3. **Run Manual Scraping**
-```typescript
+\`\`\`typescript
 // Execute full scraping run
 const result = await ScrapingService.runScheduledScraper();
 console.log(`Found ${result.totalOpportunities} new opportunities`);
-```
+\`\`\`
 
 ### 4. **Configure Scheduling**
-```typescript
+\`\`\`typescript
 // Set up automated scraping
 await ScrapingService.updateScheduleConfig({
   cron_expression: '0 */6 * * *', // Every 6 hours
   is_enabled: true
 });
-```
+\`\`\`
 
 ## 📈 Performance Benefits
 

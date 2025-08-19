@@ -1,269 +1,282 @@
-'use client';
+"use client"
 
-import { useState, useCallback, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { 
-  Play, 
-  Pause, 
-  Plus, 
-  Trash2, 
-  ExternalLink, 
-  Globe, 
-  Clock, 
+import type React from "react"
+
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Play,
+  Pause,
+  Plus,
+  Trash2,
+  Globe,
+  Clock,
   CheckCircle2,
   Loader2,
   Database,
   Activity,
   ChevronLeft,
   ChevronRight,
-  RefreshCw
-} from 'lucide-react';
-import { ScrapingService } from '@/lib/services/scraping-service-v2';
-import { ScrapedOpportunity as ImportedScrapedOpportunity } from '@/lib/types/scraping';
-import { createClient } from '@/lib/supabase/client';
+  RefreshCw,
+} from "lucide-react"
+import { ScrapingService } from "@/lib/services/scraping-service-v2"
+import type { ScrapedOpportunity as ImportedScrapedOpportunity } from "@/lib/types/scraping"
+import { createClient } from "@/lib/supabase/client"
 
 interface UrlEntry {
-  id: string;
-  url: string;
+  id: string
+  url: string
 }
 
 interface ScrapedOpportunity {
-  id: string;
-  name?: string;
-  source_url: string;
-  post_url?: string;
-  scraped_at: string;
-  processing_status?: 'raw' | 'processed' | 'converted' | 'rejected';
-  ai_confidence_score?: number;
-  category?: string;
-  author?: string;
-  content_html?: string;
-  content_text?: string;
+  id: string
+  name?: string
+  source_url: string
+  post_url?: string
+  scraped_at: string
+  processing_status?: "raw" | "processed" | "converted" | "rejected"
+  ai_confidence_score?: number
+  category?: string
+  author?: string
+  content_html?: string
+  content_text?: string
 }
 
 export default function SimpleScraper() {
-  const [urls, setUrls] = useState<UrlEntry[]>([{ id: '1', url: '' }]);
-  const [maxPosts, setMaxPosts] = useState<number>(10);
-  const [isRunning, setIsRunning] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [currentUrl, setCurrentUrl] = useState<string>();
-  const [results, setResults] = useState<ScrapedOpportunity[]>([]);
-  const [totalUrls, setTotalUrls] = useState(0);
-  const [processedUrls, setProcessedUrls] = useState(0);
-  const [totalResults, setTotalResults] = useState(0);
-  const [startTime, setStartTime] = useState<Date>();
-  const [error, setError] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const itemsPerPage = 3;
+  const [urls, setUrls] = useState<UrlEntry[]>([{ id: "1", url: "" }])
+  const [maxPosts, setMaxPosts] = useState<number>(10)
+  const [isRunning, setIsRunning] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [currentUrl, setCurrentUrl] = useState<string>()
+  const [results, setResults] = useState<ScrapedOpportunity[]>([])
+  const [totalUrls, setTotalUrls] = useState(0)
+  const [processedUrls, setProcessedUrls] = useState(0)
+  const [totalResults, setTotalResults] = useState(0)
+  const [startTime, setStartTime] = useState<Date>()
+  const [error, setError] = useState<string>("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const itemsPerPage = 3
 
   // Load recent results on mount and set up real-time subscription
   useEffect(() => {
-    loadRecentResults();
-    
+    loadRecentResults()
+
     // Set up real-time subscription for scraped opportunities
-    const supabase = createClient();
+    const supabase = createClient()
     const channel = supabase
-      .channel('scraped_opportunities_changes')
+      .channel("scraped_opportunities_changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'scraped_opportunities'
+          event: "*",
+          schema: "public",
+          table: "scraped_opportunities",
         },
         (payload: any) => {
-          console.log('Real-time update received:', payload);
+          console.log("Real-time update received:", payload)
           // Reload results when data changes
-          loadRecentResults();
-        }
+          loadRecentResults()
+        },
       )
-      .subscribe();
+      .subscribe()
 
     // Cleanup subscription on unmount
     return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   const loadRecentResults = async () => {
     try {
-      setIsLoading(true);
-      setError('');
-      console.log('Starting to load recent results...');
-      
-      const data = await ScrapingService.getScrapedOpportunities(1, 50);
-      console.log('Received data:', data);
-      
-      setResults(data.data.map((item: ImportedScrapedOpportunity) => ({
-        id: item.id,
-        name: item.name,
-        source_url: item.source_url || '',
-        post_url: item.post_url,
-        scraped_at: item.scraped_at,
-        processing_status: item.processing_status,
-        ai_confidence_score: item.ai_confidence_score,
-        category: item.category,
-        author: item.author,
-        content_html: item.content_html,
-        content_text: item.content_text,
-      })));
-      setTotalResults(data.data.length);
-      setCurrentPage(1); // Reset to first page when loading new results
+      setIsLoading(true)
+      setError("")
+      console.log("Starting to load recent results...")
+
+      const data = await ScrapingService.getScrapedOpportunities(1, 50)
+      console.log("Received data:", data)
+
+      setResults(
+        data.data.map((item: ImportedScrapedOpportunity) => ({
+          id: item.id,
+          name: item.name,
+          source_url: item.source_url || "",
+          post_url: item.post_url,
+          scraped_at: item.scraped_at,
+          processing_status: item.processing_status,
+          ai_confidence_score: item.ai_confidence_score,
+          category: item.category,
+          author: item.author,
+          content_html: item.content_html,
+          content_text: item.content_text,
+        })),
+      )
+      setTotalResults(data.data.length)
+      setCurrentPage(1) // Reset to first page when loading new results
     } catch (error) {
-      console.error('Error loading results:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load results');
-      setResults([]);
-      setTotalResults(0);
+      console.error("Error loading results:", error)
+      setError(error instanceof Error ? error.message : "Failed to load results")
+      setResults([])
+      setTotalResults(0)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const addUrl = () => {
     const newUrl: UrlEntry = {
       id: Date.now().toString(),
-      url: ''
-    };
-    setUrls([...urls, newUrl]);
-  };
+      url: "",
+    }
+    setUrls([...urls, newUrl])
+  }
 
   const removeUrl = (id: string) => {
-    setUrls(prev => {
-      const next = prev.filter(url => url.id !== id);
-      return next.length > 0 ? next : [{ id: Date.now().toString(), url: '' }];
-    });
-  };
+    setUrls((prev) => {
+      const next = prev.filter((url) => url.id !== id)
+      return next.length > 0 ? next : [{ id: Date.now().toString(), url: "" }]
+    })
+  }
 
   const updateUrl = (id: string, newUrl: string) => {
-    setUrls(urls.map(url => url.id === id ? { ...url, url: newUrl } : url));
-  };
+    setUrls(urls.map((url) => (url.id === id ? { ...url, url: newUrl } : url)))
+  }
+
+  const handleMaxPostsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (value === "") {
+      setMaxPosts(1) // Default to 1 when empty
+    } else {
+      const parsed = Number.parseInt(value)
+      if (!isNaN(parsed) && parsed >= 1 && parsed <= 100) {
+        setMaxPosts(parsed)
+      }
+    }
+  }
 
   const handleStartScraping = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    setError('');
-    const urlsToUse = urls
-      .map(u => u.url.trim())
-      .filter(u => u.length > 0);
+    e.preventDefault()
+
+    setError("")
+    const urlsToUse = urls.map((u) => u.url.trim()).filter((u) => u.length > 0)
 
     if (urlsToUse.length === 0) {
-      setError("Please add at least one valid URL");
-      return;
+      setError("Please add at least one valid URL")
+      return
     }
 
     if (maxPosts < 1 || maxPosts > 100) {
-      setError("Maximum posts must be between 1 and 100");
-      return;
+      setError("Maximum posts must be between 1 and 100")
+      return
     }
 
-    setIsRunning(true);
-    setProgress(0);
-    setProcessedUrls(0);
-    setTotalUrls(urlsToUse.length);
-    setStartTime(new Date());
+    setIsRunning(true)
+    setProgress(0)
+    setProcessedUrls(0)
+    setTotalUrls(urlsToUse.length)
+    setStartTime(new Date())
 
-    console.log(`Starting to scrape ${urlsToUse.length} URL(s) for up to ${maxPosts} posts each`);
+    console.log(`Starting to scrape ${urlsToUse.length} URL(s) for up to ${maxPosts} posts each`)
 
     try {
       // Pass the actual URLs to the scraper
-      setCurrentUrl(`Scraping ${urlsToUse.length} URL(s)...`);
-      setProgress(25);
+      setCurrentUrl(`Scraping ${urlsToUse.length} URL(s)...`)
+      setProgress(25)
 
-      const result = await ScrapingService.runScheduledScraper(urlsToUse);
-      
+      const result = await ScrapingService.runScheduledScraper(urlsToUse)
+
       if (result.success) {
-        console.log('Scraping completed:', result);
-        setProgress(100);
-        setProcessedUrls(urlsToUse.length);
-        
+        console.log("Scraping completed:", result)
+        setProgress(100)
+        setProcessedUrls(urlsToUse.length)
+
         // Reload results after scraping
-        await loadRecentResults();
-        
+        await loadRecentResults()
+
         if (result.totalOpportunities && result.totalOpportunities > 0) {
-          setError('');
+          setError("")
         } else {
-          setError(`Scraping completed but no new opportunities found. ${result.message || ''}`);
+          setError(`Scraping completed but no new opportunities found. ${result.message || ""}`)
         }
       } else {
-        throw new Error(result.error || 'Scraping failed');
+        throw new Error(result.error || "Scraping failed")
       }
     } catch (error) {
-      console.error('Scraping error:', error);
-      setError(`Scraping failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Scraping error:", error)
+      setError(`Scraping failed: ${error instanceof Error ? error.message : "Unknown error"}`)
     } finally {
-      setIsRunning(false);
-      setCurrentUrl(undefined);
+      setIsRunning(false)
+      setCurrentUrl(undefined)
     }
-  };
+  }
 
   const handleStopScraping = () => {
-    setIsRunning(false);
-    setCurrentUrl(undefined);
-    console.log("Scraping process has been stopped by user");
-  };
+    setIsRunning(false)
+    setCurrentUrl(undefined)
+    console.log("Scraping process has been stopped by user")
+  }
 
   const clearResults = async () => {
     if (!window.confirm("Are you sure you want to clear all scraped opportunities? This action cannot be undone.")) {
-      return;
+      return
     }
 
     try {
-      setIsLoading(true);
-      setError('');
-      
+      setIsLoading(true)
+      setError("")
+
       // Clear from database
-      await ScrapingService.clearAllScrapedOpportunities();
-      
+      await ScrapingService.clearAllScrapedOpportunities()
+
       // Clear local state
-      setResults([]);
-      setTotalResults(0);
-      setCurrentPage(1);
-      
-      console.log("All scraped opportunities cleared from database.");
+      setResults([])
+      setTotalResults(0)
+      setCurrentPage(1)
+
+      console.log("All scraped opportunities cleared from database.")
     } catch (error) {
-      console.error('Error clearing results:', error);
-      setError(`Failed to clear database: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Error clearing results:", error)
+      setError(`Failed to clear database: ${error instanceof Error ? error.message : "Unknown error"}`)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = new Date(dateString)
     return {
       date: date.toLocaleDateString(),
-      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-  };
+      time: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    }
+  }
 
   const formatElapsedTime = () => {
-    if (!startTime) return "0s";
-    const elapsed = Math.floor((Date.now() - startTime.getTime()) / 1000);
-    const minutes = Math.floor(elapsed / 60);
-    const seconds = elapsed % 60;
-    return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-  };
+    if (!startTime) return "0s"
+    const elapsed = Math.floor((Date.now() - startTime.getTime()) / 1000)
+    const minutes = Math.floor(elapsed / 60)
+    const seconds = elapsed % 60
+    return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`
+  }
 
   // Pagination logic
-  const totalPages = Math.ceil(results.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedResults = results.slice(startIndex, startIndex + itemsPerPage);
+  const totalPages = Math.ceil(results.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedResults = results.slice(startIndex, startIndex + itemsPerPage)
 
   const goToPage = (page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-  };
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)))
+  }
 
-  const truncateText = (text: string, maxLength: number = 200) => {
-    if (!text) return '';
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
-  };
+  const truncateText = (text: string, maxLength = 200) => {
+    if (!text) return ""
+    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text
+  }
 
   return (
     <div className="space-y-6">
@@ -291,14 +304,14 @@ export default function SimpleScraper() {
                     size="sm"
                     onClick={addUrl}
                     disabled={isRunning}
-                    className="h-8"
+                    className="h-8 bg-transparent"
                   >
                     <Plus className="w-4 h-4 mr-1" />
                     Add URL
                   </Button>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 {urls.map((urlEntry, index) => (
                   <div key={urlEntry.id} className="flex gap-2">
@@ -337,8 +350,8 @@ export default function SimpleScraper() {
                   type="number"
                   min={1}
                   max={100}
-                  value={maxPosts}
-                  onChange={(e) => setMaxPosts(parseInt(e.target.value))}
+                  value={maxPosts.toString()} // Ensure value is always a string
+                  onChange={handleMaxPostsChange} // Use new handler to prevent NaN
                   disabled={isRunning}
                   className="w-full"
                 />
@@ -353,15 +366,10 @@ export default function SimpleScraper() {
                   disabled={isLoading}
                 >
                   <Play className="w-4 h-4 mr-2" />
-                  {isLoading ? 'Loading...' : 'Start Scraping'}
+                  {isLoading ? "Loading..." : "Start Scraping"}
                 </Button>
               ) : (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={handleStopScraping}
-                  className="flex-1"
-                >
+                <Button type="button" variant="destructive" onClick={handleStopScraping} className="flex-1">
                   <Pause className="w-4 h-4 mr-2" />
                   Stop Scraping
                 </Button>
@@ -386,9 +394,7 @@ export default function SimpleScraper() {
                 )}
                 Scraping Progress
               </div>
-              <Badge variant="outline">
-                {isRunning ? 'Running' : progress === 100 ? 'Completed' : 'Stopped'}
-              </Badge>
+              <Badge variant="outline">{isRunning ? "Running" : progress === 100 ? "Completed" : "Stopped"}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -408,9 +414,7 @@ export default function SimpleScraper() {
                   <Globe className="w-4 h-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Currently scraping:</span>
                 </div>
-                <div className="text-sm font-mono bg-muted/50 p-2 rounded border truncate">
-                  {currentUrl}
-                </div>
+                <div className="text-sm font-mono bg-muted/50 p-2 rounded border truncate">{currentUrl}</div>
               </div>
             )}
 
@@ -429,9 +433,7 @@ export default function SimpleScraper() {
                 <div className="text-xs text-muted-foreground">Results Found</div>
               </div>
               <div className="space-y-1">
-                <div className="text-2xl font-bold text-blue-600">
-                  {startTime ? formatElapsedTime() : "0s"}
-                </div>
+                <div className="text-2xl font-bold text-blue-600">{startTime ? formatElapsedTime() : "0s"}</div>
                 <div className="text-xs text-muted-foreground">Elapsed Time</div>
               </div>
             </div>
@@ -458,9 +460,9 @@ export default function SimpleScraper() {
               variant="outline"
               size="sm"
               disabled={isLoading}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-transparent"
             >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
             {results.length > 0 && (
@@ -468,7 +470,7 @@ export default function SimpleScraper() {
                 onClick={clearResults}
                 variant="outline"
                 size="sm"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent"
                 disabled={isLoading}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
@@ -482,9 +484,7 @@ export default function SimpleScraper() {
             <div className="text-center py-12">
               <Loader2 className="mx-auto h-12 w-12 text-gray-400 animate-spin" />
               <h3 className="mt-2 text-sm font-semibold text-gray-900">Loading...</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Fetching scraped opportunities from the database.
-              </p>
+              <p className="mt-1 text-sm text-gray-500">Fetching scraped opportunities from the database.</p>
             </div>
           ) : results.length === 0 ? (
             <div className="text-center py-12">
@@ -509,9 +509,9 @@ export default function SimpleScraper() {
                   </TableHeader>
                   <TableBody>
                     {paginatedResults.map((opportunity) => {
-                      const scrapedDate = formatDate(opportunity.scraped_at);
-                      const content = opportunity.content_text || opportunity.content_html || 'No content available';
-                      
+                      const scrapedDate = formatDate(opportunity.scraped_at)
+                      const content = opportunity.content_text || opportunity.content_html || "No content available"
+
                       return (
                         <TableRow key={opportunity.id}>
                           <TableCell className="w-[20%]">
@@ -523,62 +523,53 @@ export default function SimpleScraper() {
                                   rel="noopener noreferrer"
                                   className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
                                 >
-                                  {opportunity.name || 'Untitled Opportunity'}
+                                  {opportunity.name || "Untitled Opportunity"}
                                 </a>
                               ) : (
-                                <div className="font-medium">
-                                  {opportunity.name || 'Untitled Opportunity'}
-                                </div>
+                                <div className="font-medium">{opportunity.name || "Untitled Opportunity"}</div>
                               )}
                               {opportunity.category && (
-                                <div className="text-xs text-muted-foreground">
-                                  {opportunity.category}
-                                </div>
+                                <div className="text-xs text-muted-foreground">{opportunity.category}</div>
                               )}
                             </div>
                           </TableCell>
                           <TableCell className="w-[10%]">
                             <Badge variant="outline" className="capitalize">
-                              {opportunity.processing_status || 'raw'}
+                              {opportunity.processing_status || "raw"}
                             </Badge>
                           </TableCell>
                           <TableCell className="w-[12%]">
                             <div className="text-sm text-muted-foreground">
-                              {opportunity.author ? (
-                                <div>{opportunity.author}</div>
-                              ) : (
-                                <div>Unknown</div>
-                              )}
+                              {opportunity.author ? <div>{opportunity.author}</div> : <div>Unknown</div>}
                             </div>
                           </TableCell>
                           <TableCell className="w-[12%]">
                             <div className="text-sm">
                               {scrapedDate.date}
                               <br />
-                              <span className="text-xs text-muted-foreground">
-                                {scrapedDate.time}
-                              </span>
+                              <span className="text-xs text-muted-foreground">{scrapedDate.time}</span>
                             </div>
                           </TableCell>
                           <TableCell className="w-[46%]">
                             <div className="max-h-[120px] overflow-y-auto text-sm text-muted-foreground pr-2">
                               <div className="whitespace-pre-wrap break-words">
-                                {content.replace(/<[^>]*>/g, '') || 'No content available'}
+                                {content.replace(/<[^>]*>/g, "") || "No content available"}
                               </div>
                             </div>
                           </TableCell>
                         </TableRow>
-                      );
+                      )
                     })}
                   </TableBody>
                 </Table>
               </div>
-              
+
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">
-                    Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, results.length)} of {results.length} opportunities
+                    Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, results.length)} of{" "}
+                    {results.length} opportunities
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
@@ -620,5 +611,5 @@ export default function SimpleScraper() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
