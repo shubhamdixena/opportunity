@@ -30,7 +30,7 @@ export async function signIn(prevState: any, formData: FormData) {
 
     if (data?.user) {
       console.log("Sign-in successful for user:", data.user.email)
-      redirect("/admin")
+      return { success: true }
     }
 
     return { error: "Sign-in failed: No user returned" }
