@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useActionState } from "react"
+import { useState, useActionState, useEffect } from "react"
 import { useFormStatus } from "react-dom"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -33,6 +34,14 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("signin")
   const [signInState, signInAction] = useActionState(signIn, null)
   const [signUpState, signUpAction] = useActionState(signUp, null)
+  const router = useRouter()
+
+  // Handle successful sign-in
+  useEffect(() => {
+    if (signInState?.success) {
+      router.push("/admin")
+    }
+  }, [signInState?.success, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
@@ -53,6 +62,12 @@ export default function AuthPage() {
                 {signInState?.error && (
                   <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
                     {signInState.error}
+                  </div>
+                )}
+
+                {signInState?.success && (
+                  <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                    Sign-in successful! Redirecting to admin dashboard...
                   </div>
                 )}
 

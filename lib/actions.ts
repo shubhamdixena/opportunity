@@ -18,16 +18,22 @@ export async function signIn(prevState: any, formData: FormData) {
   const supabase = await createClient()
 
   try {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: email.toString(),
       password: password.toString(),
     })
 
     if (error) {
+      console.error("Supabase auth error:", error)
       return { error: error.message }
     }
 
-    return { success: true }
+    if (data?.user) {
+      console.log("Sign-in successful for user:", data.user.email)
+      return { success: true }
+    }
+
+    return { error: "Sign-in failed: No user returned" }
   } catch (error) {
     console.error("Login error:", error)
     return { error: "An unexpected error occurred. Please try again." }
