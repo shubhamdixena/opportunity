@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useActionState, useEffect } from "react"
+import { useState, useActionState } from "react"
 import { useFormStatus } from "react-dom"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -37,11 +37,11 @@ export default function AuthPage() {
   const router = useRouter()
 
   // Handle successful sign-in
-  useEffect(() => {
-    if (signInState?.success) {
-      router.push("/admin")
-    }
-  }, [signInState?.success, router])
+  // useEffect(() => {
+  //   if (signInState?.success) {
+  //     router.push("/admin")
+  //   }
+  // }, [signInState?.success, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
@@ -65,11 +65,11 @@ export default function AuthPage() {
                   </div>
                 )}
 
-                {signInState?.success && (
+                {/* {signInState?.success && (
                   <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
                     Sign-in successful! Redirecting to admin dashboard...
                   </div>
-                )}
+                )} */}
 
                 <div className="space-y-2">
                   <label htmlFor="signin-email" className="text-sm font-medium">
