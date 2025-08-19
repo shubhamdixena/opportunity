@@ -116,6 +116,15 @@ export function AdminDashboard({
             <span>Manage Opportunities</span>
             <ArrowRight className="h-4 w-4" />
           </Button>
+
+          <Button
+            variant="outline"
+            className="h-16 justify-between bg-transparent"
+            onClick={() => router.push("/admin/campaign")}
+          >
+            <span>Content Campaign</span>
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>

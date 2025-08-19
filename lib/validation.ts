@@ -111,49 +111,27 @@ export function validateCampaignConfig(campaign: any): {
     errors.push('Campaign name is required')
   }
 
-  if (!campaign.source_ids || campaign.source_ids.length === 0) {
-    errors.push('At least one source is required')
+  if (!campaign.sourceUrl || campaign.sourceUrl.trim().length === 0) {
+    errors.push('Source URL is required')
   }
+
+  // Basic URL validation
+  try {
+    new URL(campaign.sourceUrl)
+  } catch (_) {
+    errors.push('Invalid Source URL format')
+  }
+  
+  // AI prompt is now optional for a campaign. Remove the strict requirement so that users can create a
+  // campaign without providing a custom AI prompt. If a prompt is supplied we still store it, but
+  // its absence should not block creation.
 
   if (campaign.frequency && campaign.frequency < 1) {
     errors.push('Frequency must be at least 1')
   }
 
-  if (campaign.max_posts && campaign.max_posts < 1) {
-    errors.push('Max posts must be at least 1')
-  }
-
-  if (campaign.frequency_unit && !['minutes', 'hours', 'days'].includes(campaign.frequency_unit)) {
+  if (campaign.frequencyUnit && !['minutes', 'hours', 'days'].includes(campaign.frequencyUnit)) {
     errors.push('Invalid frequency unit')
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors
-  }
-}
-
-/**
- * Validate scraping source configuration
- */
-export function validateSourceConfig(source: any): {
-  isValid: boolean
-  errors: string[]
-} {
-  const errors: string[] = []
-
-  if (!source.name || source.name.trim().length === 0) {
-    errors.push('Source name is required')
-  }
-
-  if (!source.domain || source.domain.trim().length === 0) {
-    errors.push('Domain is required')
-  }
-
-  // Validate domain format
-  const domainPattern = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
-  if (source.domain && !domainPattern.test(source.domain)) {
-    errors.push('Invalid domain format')
   }
 
   return {

@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AdminHeader, AdminStatsCard, AdminSearch } from "@/components/admin-layout"
 
 const categories = [
   {
@@ -56,22 +55,136 @@ const categories = [
 export default function CategoriesManagementPage() {
   return (
     <div className="p-6">
-      <AdminHeader
-        title="Categories Management"
-        description="Organize and manage opportunity categories"
-        buttonText="Add New Category"
-      />
-
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <AdminStatsCard value="5" label="Total Categories" />
-        <AdminStatsCard value="193" label="Total Opportunities" color="text-green-600" />
-        <AdminStatsCard value="78" label="Most Popular" color="text-purple-600" />
-        <AdminStatsCard value="5" label="Active Categories" color="text-blue-600" />
+        <Card className="glass-card">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <Badge className="bg-purple-500/10 text-purple-600 border-0">Total Categories</Badge>
+              <div className="flex items-center space-x-2">
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-slate-600 mb-4">Total Categories</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-semibold text-slate-800">5</p>
+                <p className="text-xs text-slate-500">opportunities</p>
+              </div>
+              <div className="text-right">
+                <Badge className="bg-green-100 text-green-700 border-0 text-xs mb-1">Active</Badge>
+                <p className="text-xs text-slate-500">Updated January 12, 2025</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <Badge className="bg-blue-500/10 text-blue-600 border-0">Total Opportunities</Badge>
+              <div className="flex items-center space-x-2">
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-slate-600 mb-4">Total Opportunities</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-semibold text-slate-800">193</p>
+                <p className="text-xs text-slate-500">opportunities</p>
+              </div>
+              <div className="text-right">
+                <Badge className="bg-green-100 text-green-700 border-0 text-xs mb-1">Active</Badge>
+                <p className="text-xs text-slate-500">Updated January 12, 2025</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <Badge className="bg-purple-500/10 text-purple-600 border-0">Most Popular</Badge>
+              <div className="flex items-center space-x-2">
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-slate-600 mb-4">Most Popular</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-semibold text-slate-800">78</p>
+                <p className="text-xs text-slate-500">opportunities</p>
+              </div>
+              <div className="text-right">
+                <Badge className="bg-green-100 text-green-700 border-0 text-xs mb-1">Active</Badge>
+                <p className="text-xs text-slate-500">Updated January 12, 2025</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <Badge className="bg-blue-500/10 text-blue-600 border-0">Active Categories</Badge>
+              <div className="flex items-center space-x-2">
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-slate-600 mb-4">Active Categories</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-semibold text-slate-800">5</p>
+                <p className="text-xs text-slate-500">opportunities</p>
+              </div>
+              <div className="text-right">
+                <Badge className="bg-green-100 text-green-700 border-0 text-xs mb-1">Active</Badge>
+                <p className="text-xs text-slate-500">Updated January 12, 2025</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="mb-6">
         <div className="max-w-md">
-          <AdminSearch placeholder="Search categories..." />
+          {/* AdminSearch placeholder removed */}
         </div>
       </div>
 

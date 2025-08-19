@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Briefcase, Settings, Shield, Bot } from "lucide-react"
+import { Home, Briefcase, Settings, Shield, Bot, Globe } from "lucide-react"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -33,6 +33,12 @@ const menuItems = [
     title: "Content Manager",
     icon: Bot,
     href: "/admin/content-manager",
+  },
+  {
+    id: "scraping",
+    title: "Web Scraping",
+    icon: Globe,
+    href: "/admin/scraping",
   },
   {
     id: "settings",

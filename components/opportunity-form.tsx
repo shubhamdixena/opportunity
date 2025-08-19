@@ -23,6 +23,21 @@ export default function OpportunityForm({ opportunity, onSubmit, onCancel }: Opp
     category: opportunity?.category || "",
     location: opportunity?.location || "",
     amount: opportunity?.amount || "",
+    fundingType: opportunity?.fundingType || "Full Funding",
+    singleAmount: opportunity?.singleAmount || "",
+    minAmount: opportunity?.minAmount || "",
+    maxAmount: opportunity?.maxAmount || "",
+    eligibleRegions: opportunity?.eligibleRegions || "",
+    about: opportunity?.about || "",
+    applyLink: opportunity?.applyLink || "",
+    whatYouGet: opportunity?.whatYouGet || "",
+    deadline: opportunity?.deadline || "",
+    startDate: opportunity?.startDate || "",
+    endDate: opportunity?.endDate || "",
+    contactEmail: opportunity?.contactEmail || "",
+    eligibility: opportunity?.eligibility || "",
+    ageRequirement: opportunity?.ageRequirement || "",
+    languageRequirement: opportunity?.languageRequirement || "",
     url: opportunity?.url || "",
     tags: opportunity?.tags || [],
     featured: opportunity?.featured || false,
@@ -36,6 +51,21 @@ export default function OpportunityForm({ opportunity, onSubmit, onCancel }: Opp
       category: opportunity?.category || "",
       location: opportunity?.location || "",
       amount: opportunity?.amount || "",
+      fundingType: opportunity?.fundingType || "Full Funding",
+      singleAmount: opportunity?.singleAmount || "",
+      minAmount: opportunity?.minAmount || "",
+      maxAmount: opportunity?.maxAmount || "",
+      eligibleRegions: opportunity?.eligibleRegions || "",
+      about: opportunity?.about || "",
+      applyLink: opportunity?.applyLink || "",
+      whatYouGet: opportunity?.whatYouGet || "",
+      deadline: opportunity?.deadline || "",
+      startDate: opportunity?.startDate || "",
+      endDate: opportunity?.endDate || "",
+      contactEmail: opportunity?.contactEmail || "",
+      eligibility: opportunity?.eligibility || "",
+      ageRequirement: opportunity?.ageRequirement || "",
+      languageRequirement: opportunity?.languageRequirement || "",
       url: opportunity?.url || "",
       tags: opportunity?.tags || [],
       featured: opportunity?.featured || false,
@@ -43,6 +73,7 @@ export default function OpportunityForm({ opportunity, onSubmit, onCancel }: Opp
   }, [opportunity])
 
   const categories = ["Scholarships", "Fellowships", "Grants", "Conferences", "Competitions"]
+  const fundingTypes = ["Full Funding", "Partial Funding", "Stipend", "Travel Grant"]
 
   const handleSubmit = () => {
     onSubmit(formData)
@@ -117,11 +148,42 @@ export default function OpportunityForm({ opportunity, onSubmit, onCancel }: Opp
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Prize/Amount</label>
+                <label className="text-sm font-medium">Funding Type</label>
+                <Select
+                  value={formData.fundingType}
+                  onValueChange={(value) => setFormData({ ...formData, fundingType: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fundingTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Amount Details</label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Input
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  placeholder="$50,000"
+                  value={formData.singleAmount}
+                  onChange={(e) => setFormData({ ...formData, singleAmount: e.target.value })}
+                  placeholder="Single Amount"
+                />
+                <Input
+                  value={formData.minAmount}
+                  onChange={(e) => setFormData({ ...formData, minAmount: e.target.value })}
+                  placeholder="Minimum Amount"
+                />
+                <Input
+                  value={formData.maxAmount}
+                  onChange={(e) => setFormData({ ...formData, maxAmount: e.target.value })}
+                  placeholder="Maximum Amount"
                 />
               </div>
             </div>
@@ -144,6 +206,14 @@ export default function OpportunityForm({ opportunity, onSubmit, onCancel }: Opp
                 />
               </div>
             </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Eligible Countries/Regions</label>
+              <Input
+                value={formData.eligibleRegions}
+                onChange={(e) => setFormData({ ...formData, eligibleRegions: e.target.value })}
+                placeholder="Global, USA, EU, Asia-Pacific, etc."
+              />
+            </div>
 
             <div className="flex items-center space-x-2">
               <input
@@ -154,8 +224,102 @@ export default function OpportunityForm({ opportunity, onSubmit, onCancel }: Opp
                 className="rounded"
               />
               <label htmlFor="featured" className="text-sm font-medium">
-                Feature this opportunity
+                Feature this opportunity on the homepage
               </label>
+            </div>
+          </TabsContent>
+          <TabsContent value="details" className="space-y-6 mt-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">About This Opportunity</label>
+              <Textarea
+                value={formData.about}
+                onChange={(e) => setFormData({ ...formData, about: e.target.value })}
+                placeholder="Join the world's most prestigious innovation challenge focused on developing cutting-edge solutions for climate change..."
+                rows={5}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">How to Apply</label>
+              <Textarea
+                value={formData.applyLink}
+                onChange={(e) => setFormData({ ...formData, applyLink: e.target.value })}
+                placeholder="Submit your application through our online portal including your team information, project proposal..."
+                rows={5}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">What You'll Get</label>
+              <Textarea
+                value={formData.whatYouGet}
+                onChange={(e) => setFormData({ ...formData, whatYouGet: e.target.value })}
+                placeholder="$50,000 grand prize, Mentorship from industry leaders, Access to investor network..."
+                rows={5}
+              />
+            </div>
+          </TabsContent>
+          <TabsContent value="dates" className="space-y-6 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Application Deadline *</label>
+                <Input
+                  value={formData.deadline}
+                  onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                  placeholder="dd/mm/yyyy"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Program Start Date</label>
+                <Input
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  placeholder="dd/mm/yyyy"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Program End Date</label>
+                <Input
+                  value={formData.endDate}
+                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  placeholder="dd/mm/yyyy"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Contact Email</label>
+              <Input
+                value={formData.contactEmail}
+                onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                placeholder="innovation@techforgood.org"
+              />
+            </div>
+          </TabsContent>
+          <TabsContent value="requirements" className="space-y-6 mt-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Requirements</label>
+              <Textarea
+                value={formData.eligibility}
+                onChange={(e) => setFormData({ ...formData, eligibility: e.target.value })}
+                placeholder="Must be 18-35 years old, Working prototype required..."
+                rows={5}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Age Eligibility</label>
+                <Input
+                  value={formData.ageRequirement}
+                  onChange={(e) => setFormData({ ...formData, ageRequirement: e.target.value })}
+                  placeholder="18-35 years old"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Language Requirements</label>
+                <Input
+                  value={formData.languageRequirement}
+                  onChange={(e) => setFormData({ ...formData, languageRequirement: e.target.value })}
+                  placeholder="English proficiency required"
+                />
+              </div>
             </div>
           </TabsContent>
         </Tabs>

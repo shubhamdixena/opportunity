@@ -7,14 +7,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import Link from "next/link"
 
 export interface Opportunity {
-  id: string
+  id?: string
   title: string
   organization: string
   description: string
   category: string
   location: string
-  deadline: string
+  deadline?: string
   amount?: string
+  fundingType?: string
+  singleAmount?: string
+  minAmount?: string
+  maxAmount?: string
+  eligibleRegions?: string
+  about?: string
+  applyLink?: string
+  whatYouGet?: string
+  startDate?: string
+  endDate?: string
+  contactEmail?: string
+  eligibility?: string
+  ageRequirement?: string
+  languageRequirement?: string
   tags: string[]
   url: string
   featured?: boolean

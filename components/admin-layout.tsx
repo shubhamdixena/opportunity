@@ -1,5 +1,5 @@
 "use client"
-import AdminSidebar from "@/components/admin-sidebar"
+import { AdminSidebar } from "@/components/admin-sidebar";
 import { ReactNode } from "react"
 
 interface AdminLayoutProps {
