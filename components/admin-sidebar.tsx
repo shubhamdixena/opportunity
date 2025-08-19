@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Briefcase, Settings, Shield, Bot, Globe } from "lucide-react"
+import { Home, Briefcase, Settings, Shield, Globe, FileText } from "lucide-react"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -10,7 +10,6 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar"
@@ -29,16 +28,16 @@ const menuItems = [
     href: "/admin/opportunities",
   },
   {
-    id: "content-manager",
-    title: "Content Manager",
-    icon: Bot,
-    href: "/admin/content-manager",
-  },
-  {
     id: "scraping",
     title: "Web Scraping",
     icon: Globe,
     href: "/admin/scraping",
+  },
+  {
+    id: "scraped-content",
+    title: "Scraped Content",
+    icon: FileText,
+    href: "/admin/scraped-content",
   },
   {
     id: "settings",
@@ -54,17 +53,12 @@ export function AdminSidebar() {
   return (
     <Sidebar className="flex h-screen w-64 flex-shrink-0 flex-col border-r border-border bg-sidebar shadow-sm">
       <SidebarHeader className="flex-shrink-0 border-b border-border p-6">
-        <Link
-          href="/"
-          className="flex items-center space-x-3 transition-opacity hover:opacity-80"
-        >
+        <Link href="/" className="flex items-center space-x-3 transition-opacity hover:opacity-80">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-slate-600 to-slate-800 shadow-md">
             <Shield className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-sidebar-foreground">
-              Admin
-            </h2>
+            <h2 className="text-lg font-semibold text-sidebar-foreground">Admin</h2>
             <p className="text-sm text-muted-foreground">OpportunityHub</p>
           </div>
         </Link>
@@ -75,8 +69,7 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="space-y-2">
               {menuItems.map((item) => {
-                const isActive =
-                  pathname === item.href || pathname.startsWith(item.href + "/")
+                const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
 
                 return (
                   <SidebarMenuItem key={item.id}>
@@ -94,17 +87,11 @@ export function AdminSidebar() {
                     >
                       <item.icon
                         className={`mr-3 h-5 w-5 transition-colors ${
-                          isActive
-                            ? "text-primary"
-                            : "text-muted-foreground group-hover:text-accent-foreground"
+                          isActive ? "text-primary" : "text-muted-foreground group-hover:text-accent-foreground"
                         }`}
                       />
-                      <span className="truncate text-sm font-medium">
-                        {item.title}
-                      </span>
-                      {isActive && (
-                        <div className="ml-auto h-2 w-2 rounded-full bg-primary"></div>
-                      )}
+                      <span className="truncate text-sm font-medium">{item.title}</span>
+                      {isActive && <div className="ml-auto h-2 w-2 rounded-full bg-primary"></div>}
                     </Link>
                   </SidebarMenuItem>
                 )
