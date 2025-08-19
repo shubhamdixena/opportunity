@@ -189,7 +189,7 @@ export default function SimpleScraper() {
       setCurrentUrl(`Scraping ${urlsToUse.length} URL(s)...`)
       setProgress(25)
 
-      const result = await ScrapingService.runScheduledScraper(urlsToUse)
+      const result = await ScrapingService.runScheduledScraper(urlsToUse, maxPosts)
 
       if (result.success) {
         console.log("Scraping completed:", result)
@@ -422,15 +422,15 @@ export default function SimpleScraper() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-1">
                 <div className="text-2xl font-bold text-primary">{processedUrls}</div>
-                <div className="text-xs text-muted-foreground">URLs Processed</div>
+                <div className="text-xs text-muted-foreground">Base URLs Processed</div>
               </div>
               <div className="space-y-1">
                 <div className="text-2xl font-bold text-primary">{totalUrls}</div>
-                <div className="text-xs text-muted-foreground">Total URLs</div>
+                <div className="text-xs text-muted-foreground">Total Base URLs</div>
               </div>
               <div className="space-y-1">
                 <div className="text-2xl font-bold text-green-600">{totalResults}</div>
-                <div className="text-xs text-muted-foreground">Results Found</div>
+                <div className="text-xs text-muted-foreground">Posts Found</div>
               </div>
               <div className="space-y-1">
                 <div className="text-2xl font-bold text-blue-600">{startTime ? formatElapsedTime() : "0s"}</div>

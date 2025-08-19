@@ -258,7 +258,10 @@ export class ScrapingService {
     }
   }
 
-  static async runScheduledScraper(urls?: string[]): Promise<{
+  static async runScheduledScraper(
+    urls?: string[],
+    maxPosts = 10,
+  ): Promise<{
     success: boolean
     totalOpportunities?: number
     sourcesProcessed?: number
@@ -271,16 +274,18 @@ export class ScrapingService {
     try {
       const urlsToScrape = urls && urls.length > 0 ? urls : ["https://opportunitiesforyouth.org/"]
 
-      console.log("Starting scraping for URLs:", urlsToScrape)
+      console.log(`Starting scraping for URLs: ${urlsToScrape} with maxPosts: ${maxPosts}`)
 
       const results = []
+      let totalProcessed = 0
+      let totalSkipped = 0
+      let totalErrors = 0
 
       for (const baseUrl of urlsToScrape) {
         try {
           console.log(`Discovering posts from: ${baseUrl}`)
 
-          // Step 1: Discover posts from the base URL (sitemap, RSS, etc.)
-          const discoveryResult = await this.discoverPosts(baseUrl, 20, "sitemap-first")
+          const discoveryResult = await this.discoverPosts(baseUrl, maxPosts, "sitemap-first")
 
           if (!discoveryResult.success || discoveryResult.posts.length === 0) {
             console.error(`Failed to discover posts from ${baseUrl}:`, discoveryResult.error)
@@ -291,6 +296,7 @@ export class ScrapingService {
 
           // Step 2: Extract content from each discovered post URL
           for (const postUrl of discoveryResult.posts) {
+            totalProcessed++
             try {
               console.log(`Extracting content from: ${postUrl}`)
 
@@ -299,6 +305,7 @@ export class ScrapingService {
 
               if (!contentResult.success) {
                 console.error(`Failed to extract content from ${postUrl}:`, contentResult.error)
+                totalErrors++
                 continue
               }
 
@@ -323,42 +330,58 @@ export class ScrapingService {
                 ai_confidence_score: 0.85,
               }
 
-              // Save to database
               const { data: savedData, error: saveError } = await supabase
                 .from("scraped_opportunities")
-                .insert([scrapedOpportunity])
+                .upsert([scrapedOpportunity], {
+                  onConflict: "post_url",
+                  ignoreDuplicates: false,
+                })
                 .select()
-                .single()
 
               if (saveError) {
                 console.error("Error saving scraped opportunity:", saveError)
+                totalErrors++
                 continue
               }
 
-              console.log("Successfully saved opportunity:", savedData?.name)
-              results.push(savedData)
+              if (savedData && savedData.length > 0) {
+                console.log("Successfully saved opportunity:", savedData[0]?.name)
+                results.push(savedData[0])
+              } else {
+                console.log("Opportunity already exists, skipped:", scrapedOpportunity.name)
+                totalSkipped++
+              }
             } catch (error) {
               console.error(`Error processing post URL ${postUrl}:`, error)
+              totalErrors++
               continue
             }
           }
         } catch (error) {
           console.error(`Error processing base URL ${baseUrl}:`, error)
+          totalErrors++
           continue
         }
       }
 
-      if (results.length === 0) {
-        throw new Error("No opportunities were successfully scraped")
+      const hasResults = results.length > 0
+      const hasProcessedAny = totalProcessed > 0
+
+      if (!hasProcessedAny) {
+        throw new Error("No URLs could be processed - check if the sitemap URLs are accessible")
       }
 
+      const message = hasResults
+        ? `Successfully scraped ${results.length} new opportunities (${totalSkipped} duplicates skipped, ${totalErrors} errors) from ${urlsToScrape.length} sources`
+        : `Processed ${totalProcessed} URLs but found no new opportunities (${totalSkipped} duplicates, ${totalErrors} errors)`
+
       return {
-        success: true,
+        success: hasResults || totalSkipped > 0, // Consider successful if we found new or existing opportunities
         totalOpportunities: results.length,
         sourcesProcessed: urlsToScrape.length,
         results: results,
         timestamp: new Date().toISOString(),
-        message: `Successfully scraped ${results.length} opportunities from ${urlsToScrape.length} sources`,
+        message: message,
       }
     } catch (error) {
       console.error("Error running scheduled scraper:", error)
