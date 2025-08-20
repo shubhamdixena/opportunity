@@ -315,19 +315,26 @@ export class ScrapingService {
                 author: contentResult.author,
               })
 
-              // Create scraped opportunity record with full content
+              if (!contentResult.contentText || contentResult.contentText.length < 100) {
+                console.log("Skipping entry with insufficient content:", contentResult.title)
+                totalSkipped++
+                continue
+              }
+
               const scrapedOpportunity = {
                 name: contentResult.title || "Untitled Opportunity",
                 source_url: new URL(baseUrl).origin,
                 post_url: postUrl,
                 content_html: contentResult.contentHtml || "",
                 content_text: contentResult.contentText || "",
+                details: contentResult.contentText || contentResult.contentHtml || "",
                 author: contentResult.author || "Unknown",
                 published_at: contentResult.publishedAt || new Date().toISOString(),
                 tags: contentResult.tags || [],
+                category: "Scholarship", // Default category
                 scraped_at: new Date().toISOString(),
-                processing_status: "raw" as const,
-                ai_confidence_score: 0.85,
+                processing_status: "raw" as const, // Start as raw for automatic processing
+                ai_confidence_score: 0,
               }
 
               const { data: savedData, error: saveError } = await supabase
@@ -339,14 +346,41 @@ export class ScrapingService {
                 .select()
 
               if (saveError) {
-                console.error("Error saving scraped opportunity:", saveError)
-                totalErrors++
-                continue
+                if (saveError.message.includes("duplicate key value violates unique constraint")) {
+                  console.log("Opportunity already exists, skipped:", scrapedOpportunity.name)
+                  totalSkipped++
+                  continue
+                } else {
+                  console.error("Error saving scraped opportunity:", saveError)
+                  totalErrors++
+                  continue
+                }
               }
 
               if (savedData && savedData.length > 0) {
                 console.log("Successfully saved opportunity:", savedData[0]?.name)
                 results.push(savedData[0])
+
+                try {
+                  const processResponse = await fetch("/api/scraped-content/process-ai", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      id: savedData[0].id,
+                      title: savedData[0].name,
+                      content: savedData[0].details,
+                      sourceUrl: savedData[0].post_url,
+                    }),
+                  })
+
+                  if (processResponse.ok) {
+                    console.log("Successfully triggered AI processing for:", savedData[0].name)
+                  } else {
+                    console.error("Failed to trigger AI processing for:", savedData[0].name)
+                  }
+                } catch (processError) {
+                  console.error("Failed to trigger AI processing:", processError)
+                }
               } else {
                 console.log("Opportunity already exists, skipped:", scrapedOpportunity.name)
                 totalSkipped++
