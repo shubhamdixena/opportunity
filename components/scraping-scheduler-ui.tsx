@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { Trash2, Play, Pause, Plus, Globe, Settings } from "lucide-react"
+import { Trash2, Play, Pause, Plus, Globe } from "lucide-react"
 
 interface ScrapingSource {
   id?: string
@@ -19,13 +19,6 @@ interface ScrapingSource {
   source_type: "sitemap" | "rss" | "manual"
 }
 
-interface SchedulerConfig {
-  frequency: number
-  frequencyUnit: "minutes" | "hours" | "days"
-  maxPosts: number
-  isEnabled: boolean
-}
-
 export default function ScrapingSchedulerUI() {
   const [sources, setSources] = useState<ScrapingSource[]>([])
   const [newSource, setNewSource] = useState<ScrapingSource>({
@@ -34,12 +27,6 @@ export default function ScrapingSchedulerUI() {
     max_posts: 10,
     is_active: true,
     source_type: "sitemap",
-  })
-  const [schedulerConfig, setSchedulerConfig] = useState<SchedulerConfig>({
-    frequency: 1,
-    frequencyUnit: "hours",
-    maxPosts: 50,
-    isEnabled: false,
   })
   const [isSchedulerRunning, setIsSchedulerRunning] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -118,25 +105,6 @@ export default function ScrapingSchedulerUI() {
     }
   }
 
-  const saveSchedulerConfig = async () => {
-    setLoading(true)
-    try {
-      const response = await fetch("/api/scraping/schedule", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(schedulerConfig),
-      })
-
-      if (response.ok) {
-        console.log("Scheduler configuration saved")
-      }
-    } catch (error) {
-      console.error("Error saving scheduler config:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const toggleScheduler = async () => {
     try {
       const action = isSchedulerRunning ? "stop" : "start"
@@ -154,95 +122,37 @@ export default function ScrapingSchedulerUI() {
 
   return (
     <div className="space-y-6">
-      {/* Scheduler Configuration */}
+      {/* Scheduler Control */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Automatic Scraping Scheduler
-          </CardTitle>
-          <CardDescription>Configure automatic scraping intervals for saved sources</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="frequency">Frequency</Label>
-              <Input
-                id="frequency"
-                type="number"
-                min="1"
-                value={schedulerConfig.frequency}
-                onChange={(e) =>
-                  setSchedulerConfig((prev) => ({
-                    ...prev,
-                    frequency: Number.parseInt(e.target.value) || 1,
-                  }))
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor="frequencyUnit">Unit</Label>
-              <Select
-                value={schedulerConfig.frequencyUnit}
-                onValueChange={(value: "minutes" | "hours" | "days") =>
-                  setSchedulerConfig((prev) => ({ ...prev, frequencyUnit: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="minutes">Minutes</SelectItem>
-                  <SelectItem value="hours">Hours</SelectItem>
-                  <SelectItem value="days">Days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="maxPosts">Max Posts per Run</Label>
-              <Input
-                id="maxPosts"
-                type="number"
-                min="1"
-                value={schedulerConfig.maxPosts}
-                onChange={(e) =>
-                  setSchedulerConfig((prev) => ({
-                    ...prev,
-                    maxPosts: Number.parseInt(e.target.value) || 10,
-                  }))
-                }
-              />
-            </div>
-          </div>
-
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="scheduler-enabled"
-                checked={schedulerConfig.isEnabled}
-                onCheckedChange={(checked) => setSchedulerConfig((prev) => ({ ...prev, isEnabled: checked }))}
-              />
-              <Label htmlFor="scheduler-enabled">Enable Scheduler</Label>
+            <div>
+              <CardTitle>Automatic Scraping</CardTitle>
+              <CardDescription>Schedule automatic scraping of saved sources</CardDescription>
             </div>
-
-            <div className="flex gap-2">
-              <Button onClick={saveSchedulerConfig} disabled={loading}>
-                Save Configuration
-              </Button>
-              <Button onClick={toggleScheduler} variant={isSchedulerRunning ? "destructive" : "default"}>
-                {isSchedulerRunning ? (
-                  <>
-                    <Pause className="h-4 w-4 mr-2" />
-                    Stop Scheduler
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 mr-2" />
-                    Start Scheduler
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button onClick={toggleScheduler} variant={isSchedulerRunning ? "destructive" : "default"}>
+              {isSchedulerRunning ? (
+                <>
+                  <Pause className="h-4 w-4 mr-2" />
+                  Stop
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4 mr-2" />
+                  Start
+                </>
+              )}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <Badge variant={isSchedulerRunning ? "default" : "secondary"} className="text-sm px-3 py-1">
+              {isSchedulerRunning ? "Running - checks sources every hour" : "Stopped"}
+            </Badge>
+            <p className="text-sm text-muted-foreground">
+              {sources.filter(s => s.is_active).length} active sources
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -252,17 +162,16 @@ export default function ScrapingSchedulerUI() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
-            Add Scraping Source
+            Add Source
           </CardTitle>
-          <CardDescription>Save URLs for automatic scraping</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="sourceName">Source Name</Label>
+              <Label htmlFor="sourceName">Name</Label>
               <Input
                 id="sourceName"
-                placeholder="e.g., Opportunities Circle"
+                placeholder="Source name"
                 value={newSource.name}
                 onChange={(e) => setNewSource((prev) => ({ ...prev, name: e.target.value }))}
               />
@@ -276,12 +185,15 @@ export default function ScrapingSchedulerUI() {
                 onChange={(e) => setNewSource((prev) => ({ ...prev, url: e.target.value }))}
               />
             </div>
-            <div>
-              <Label htmlFor="sourceType">Source Type</Label>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Label htmlFor="sourceType">Type</Label>
               <Select
                 value={newSource.source_type}
-                onValueChange={(value: "sitemap" | "rss" | "manual") =>
-                  setNewSource((prev) => ({ ...prev, source_type: value }))
+                onValueChange={(value) =>
+                  setNewSource((prev) => ({ ...prev, source_type: value as "sitemap" | "rss" | "manual" }))
                 }
               >
                 <SelectTrigger>
@@ -294,12 +206,13 @@ export default function ScrapingSchedulerUI() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="w-32">
               <Label htmlFor="sourceMaxPosts">Max Posts</Label>
               <Input
                 id="sourceMaxPosts"
                 type="number"
                 min="1"
+                max="100"
                 value={newSource.max_posts}
                 onChange={(e) =>
                   setNewSource((prev) => ({
@@ -313,7 +226,7 @@ export default function ScrapingSchedulerUI() {
 
           <Button onClick={saveSource} disabled={loading || !newSource.name || !newSource.url}>
             <Plus className="h-4 w-4 mr-2" />
-            Save Source
+            Add Source
           </Button>
         </CardContent>
       </Card>
@@ -323,30 +236,29 @@ export default function ScrapingSchedulerUI() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
-            Saved Sources ({sources.length})
+            Sources ({sources.length})
           </CardTitle>
-          <CardDescription>Manage your saved scraping sources</CardDescription>
         </CardHeader>
         <CardContent>
           {sources.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No saved sources yet. Add your first source above.</p>
+            <p className="text-muted-foreground text-center py-8">No sources added yet</p>
           ) : (
             <div className="space-y-3">
               {sources.map((source) => (
-                <div key={source.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
+                <div key={source.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium">{source.name}</h4>
-                      <Badge variant={source.is_active ? "default" : "secondary"}>
-                        {source.is_active ? "Active" : "Inactive"}
+                      <h4 className="font-medium truncate">{source.name}</h4>
+                      <Badge variant={source.is_active ? "default" : "secondary"} className="text-xs">
+                        {source.is_active ? "Active" : "Off"}
                       </Badge>
-                      <Badge variant="outline">{source.source_type}</Badge>
+                      <Badge variant="outline" className="text-xs">{source.source_type}</Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">{source.url}</p>
-                    <p className="text-xs text-muted-foreground">Max posts: {source.max_posts}</p>
+                    <p className="text-sm text-muted-foreground truncate">{source.url}</p>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 ml-4">
+                    <span className="text-xs text-muted-foreground">Max: {source.max_posts}</span>
                     <Switch
                       checked={source.is_active}
                       onCheckedChange={(checked) => source.id && toggleSourceActive(source.id, checked)}
