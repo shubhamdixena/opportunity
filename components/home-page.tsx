@@ -6,16 +6,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Badge } from "./ui/badge"
 import { OpportunityCard, type Opportunity } from "./opportunity-card"
 import { useRouter } from "next/navigation"
-import { Category } from "@/lib/data"
+import type { Category } from "@/lib/data"
 
 interface HomePageProps {
   onPageChange?: (page: string) => void
   featuredOpportunities: Opportunity[]
   onOpportunityClick?: (opportunity: Opportunity) => void
   categories: Category[]
+  allOpportunities?: Opportunity[] // Added prop for all opportunities from database
 }
 
-export function HomePage({ onPageChange, featuredOpportunities, onOpportunityClick, categories = [] }: HomePageProps) {
+export function HomePage({
+  onPageChange,
+  featuredOpportunities,
+  onOpportunityClick,
+  categories = [],
+  allOpportunities = [],
+}: HomePageProps) {
   const router = useRouter()
 
   const handlePageChange = (page: string) => {
@@ -33,6 +40,9 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
       router.push(`/opportunity/${opportunity.id}`)
     }
   }
+
+  const displayOpportunities = allOpportunities.length > 0 ? allOpportunities : featuredOpportunities
+  const latestOpportunities = displayOpportunities.slice(0, 6)
 
   return (
     <div>
@@ -142,13 +152,36 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {featuredOpportunities.slice(0, 3).map((opportunity) => (
-              <div key={opportunity.id} onClick={() => handleOpportunityClick(opportunity)} className="cursor-pointer">
-                <OpportunityCard opportunity={opportunity} />
-              </div>
-            ))}
-          </div>
+          {displayOpportunities.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground mb-4">No opportunities available yet.</p>
+              <p className="text-sm text-muted-foreground">
+                New opportunities will appear here as they are scraped and processed.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {featuredOpportunities.length > 0
+                ? featuredOpportunities.slice(0, 3).map((opportunity) => (
+                    <div
+                      key={opportunity.id}
+                      onClick={() => handleOpportunityClick(opportunity)}
+                      className="cursor-pointer"
+                    >
+                      <OpportunityCard opportunity={opportunity} />
+                    </div>
+                  ))
+                : displayOpportunities.slice(0, 3).map((opportunity) => (
+                    <div
+                      key={opportunity.id}
+                      onClick={() => handleOpportunityClick(opportunity)}
+                      className="cursor-pointer"
+                    >
+                      <OpportunityCard opportunity={opportunity} />
+                    </div>
+                  ))}
+            </div>
+          )}
 
           <div className="text-center md:hidden">
             <Button variant="outline" onClick={() => handlePageChange("scholarships")}>
@@ -169,52 +202,61 @@ export function HomePage({ onPageChange, featuredOpportunities, onOpportunityCli
             </p>
           </div>
 
-          <div className="space-y-3 max-w-4xl mx-auto">
-            {featuredOpportunities.slice(0, 6).map((opportunity, index) => (
-              <div
-                key={opportunity.id}
-                className="bg-card border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all duration-300 group"
-                onClick={() => handleOpportunityClick(opportunity)}
-              >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline" className="text-xs">
-                        {opportunity.category}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">•</span>
-                      <span className="text-sm text-muted-foreground">{opportunity.organization}</span>
-                      {opportunity.amount && (
-                        <>
-                          <span className="text-sm text-muted-foreground">•</span>
-                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
-                            {opportunity.amount}
-                          </Badge>
-                        </>
-                      )}
+          {latestOpportunities.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground mb-4">No recent opportunities found.</p>
+              <p className="text-sm text-muted-foreground">Check back soon for new opportunities!</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-w-4xl mx-auto">
+              {latestOpportunities.map((opportunity, index) => (
+                <div
+                  key={opportunity.id}
+                  className="bg-card border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all duration-300 group"
+                  onClick={() => handleOpportunityClick(opportunity)}
+                >
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="text-xs">
+                          {opportunity.category}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">•</span>
+                        <span className="text-sm text-muted-foreground">{opportunity.organization}</span>
+                        {opportunity.amount && (
+                          <>
+                            <span className="text-sm text-muted-foreground">•</span>
+                            <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                              {opportunity.amount}
+                            </Badge>
+                          </>
+                        )}
+                      </div>
+                      <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
+                        {opportunity.title}
+                      </h3>
                     </div>
-                    <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
-                      {opportunity.title}
-                    </h3>
-                  </div>
 
-                  <div className="flex flex-col md:items-end gap-1 md:min-w-[120px]">
-                    <div className="text-sm">
-                      <span className="text-muted-foreground">Deadline: </span>
-                      <span className="font-medium">
-                        {new Date(opportunity.deadline).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </span>
+                    <div className="flex flex-col md:items-end gap-1 md:min-w-[120px]">
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">Deadline: </span>
+                        <span className="font-medium">
+                          {opportunity.deadline
+                            ? new Date(opportunity.deadline).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })
+                            : "TBD"}
+                        </span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">{opportunity.location || "Global"}</div>
                     </div>
-                    <div className="text-sm text-muted-foreground">{opportunity.location}</div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           <div className="text-center mt-12">
             <Button size="lg" onClick={() => handlePageChange("scholarships")}>

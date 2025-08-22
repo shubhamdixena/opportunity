@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Menu, X } from "lucide-react"
 import Link from "next/link"
 import { Button } from "./ui/button"
-import { BarChart3, FolderOpen, Globe, Home, Settings, Users, FileText } from "lucide-react"
+import { BarChart3, FolderOpen, Globe, Home, Settings, Users } from "lucide-react"
 
 export function AdminMobileSidebar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -14,7 +14,6 @@ export function AdminMobileSidebar() {
   const menuItems = [
     { href: "/admin", label: "Dashboard", icon: Home },
     { href: "/admin/opportunities", label: "Opportunities", icon: Globe },
-    { href: "/admin/scraped-content", label: "Scraped Content", icon: FileText },
     { href: "/admin/categories", label: "Categories", icon: FolderOpen },
     { href: "/admin/users", label: "Users", icon: Users },
     { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },

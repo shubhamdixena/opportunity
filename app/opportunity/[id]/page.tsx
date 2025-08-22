@@ -5,8 +5,18 @@ import { Navigation } from "@/components/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
 
+function isValidUUID(id: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  return uuidRegex.test(id)
+}
+
 async function getOpportunity(id: string) {
   try {
+    if (!isValidUUID(id)) {
+      console.error("Invalid UUID format:", id)
+      return null
+    }
+
     const supabase = await createClient()
     const { data: opportunity, error } = await supabase.from("opportunities").select("*").eq("id", id).single()
 
@@ -22,9 +32,8 @@ async function getOpportunity(id: string) {
   }
 }
 
-export default async function OpportunityPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params
-  const opportunity = await getOpportunity(resolvedParams.id)
+export default async function OpportunityPage({ params }: { params: { id: string } }) {
+  const opportunity = await getOpportunity(params.id)
 
   if (!opportunity) {
     notFound()

@@ -2,20 +2,33 @@ import { createClient } from "@/lib/supabase/server"
 import { HomePage } from "@/components/home-page"
 import { Navigation } from "@/components/navigation"
 import type { Opportunity } from "@/components/opportunity-card"
-import { getCategories, getFeaturedOpportunities } from "@/lib/data"
+import { getCategories } from "@/lib/data"
 
 async function getOpportunities(): Promise<Opportunity[]> {
   try {
     const supabase = await createClient()
+
+    console.log("[v0] Fetching opportunities from database...")
+
     const { data: opportunities, error } = await supabase
       .from("opportunities")
       .select("*")
+      .eq("status", "active")
       .order("created_at", { ascending: false })
-      .limit(20) // Limit initial load for better performance
+      .limit(20)
 
     if (error) {
-      console.error("Error fetching opportunities:", error)
+      console.error("[v0] Error fetching opportunities:", error)
       return []
+    }
+
+    console.log("[v0] Found opportunities in database:", opportunities?.length || 0)
+    if (opportunities && opportunities.length > 0) {
+      console.log("[v0] Sample opportunity:", {
+        title: opportunities[0].title,
+        organization: opportunities[0].organization,
+        created_at: opportunities[0].created_at,
+      })
     }
 
     // Transform database data to match Opportunity interface
@@ -24,21 +37,21 @@ async function getOpportunities(): Promise<Opportunity[]> {
         id: opp.id.toString(),
         title: opp.title,
         organization: opp.organization,
-        description: opp.description,
+        description: opp.about_opportunity || opp.details || "No description available",
         category: opp.category,
         location: opp.location,
-        deadline: opp.deadline,
+        deadline: opp.application_deadline,
         amount:
-          opp.amount_min && opp.amount_max
-            ? `${opp.amount_min} - ${opp.amount_max}`
-            : opp.amount_min || opp.amount_max || "Not specified",
+          opp.amounts?.min && opp.amounts?.max
+            ? `${opp.amounts.min} - ${opp.amounts.max}`
+            : opp.amounts?.value || "Not specified",
         tags: opp.tags || [],
-        url: opp.url,
+        url: opp.application_url || opp.website_url,
         featured: opp.featured || false,
       })) || []
     )
   } catch (error) {
-    console.error("Error in getOpportunities:", error)
+    console.error("[v0] Error in getOpportunities:", error)
     return []
   }
 }
@@ -47,13 +60,23 @@ async function getOpportunities(): Promise<Opportunity[]> {
 export const revalidate = 300 // 5 minutes
 
 export default async function Page() {
-  const featuredOpportunities = await getFeaturedOpportunities()
+  const opportunities = await getOpportunities()
+  const featuredOpportunities = opportunities.filter((opp) => opp.featured).slice(0, 3)
   const categories = await getCategories()
+
+  console.log("[v0] Passing to homepage:", {
+    totalOpportunities: opportunities.length,
+    featuredCount: featuredOpportunities.length,
+  })
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation currentPage="home" showSearch={false} />
-      <HomePage featuredOpportunities={featuredOpportunities} categories={categories} />
+      <HomePage
+        featuredOpportunities={featuredOpportunities}
+        categories={categories}
+        allOpportunities={opportunities}
+      />
     </div>
   )
 }

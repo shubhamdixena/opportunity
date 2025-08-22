@@ -2,6 +2,75 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { extractOpportunityData } from "@/lib/ai/gemini"
 
+function formatArrayField(value: any): string[] {
+  if (Array.isArray(value)) return value
+  if (typeof value === "string") {
+    // Handle comma-separated strings and convert to array
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0)
+  }
+  return []
+}
+
+function formatDateField(dateValue: any): string | null {
+  if (!dateValue) return null
+
+  try {
+    // Try parsing as ISO date first
+    const date = new Date(dateValue)
+    if (!isNaN(date.getTime())) {
+      return date.toISOString()
+    }
+  } catch (error) {
+    // If parsing fails, return null instead of invalid date
+    console.warn("Invalid date format:", dateValue)
+  }
+
+  return null
+}
+
+function formatAmountsField(aiData: any): any {
+  // Handle different amount formats from AI
+  if (aiData.minAmount && aiData.maxAmount) {
+    return {
+      type: "range",
+      min: aiData.minAmount,
+      max: aiData.maxAmount,
+    }
+  } else if (aiData.amount) {
+    return {
+      type: "single",
+      value: aiData.amount,
+    }
+  }
+  return { type: "single", value: "TBD" }
+}
+
+function normalizeFundingType(fundingType: string): string {
+  if (!fundingType) return "Variable Amount"
+
+  const normalized = fundingType.toLowerCase().trim()
+
+  // Map common AI responses to valid database values
+  if (normalized.includes("full") || normalized.includes("fully")) {
+    return "Fully Funded"
+  } else if (normalized.includes("partial")) {
+    return "Partially Funded"
+  } else if (normalized.includes("scholarship")) {
+    return "Scholarship"
+  } else if (normalized.includes("stipend")) {
+    return "Stipend"
+  } else if (normalized.includes("prize") || normalized.includes("award")) {
+    return "Prize Money"
+  } else if (normalized.includes("grant")) {
+    return "Grant"
+  } else {
+    return "Variable Amount"
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { id, title, content, sourceUrl } = await request.json()
@@ -32,30 +101,35 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Create opportunity from AI-processed data
       const opportunityData = {
         title: result.data.title || title,
         organization: result.data.organization || "Unknown Organization",
-        about_opportunity: result.data.description || content.substring(0, 1000),
+        about_opportunity: result.data.aboutOpportunity || result.data.description || content.substring(0, 1000),
         requirements: result.data.requirements || "Please check the original source for requirements",
-        how_to_apply: result.data.applicationProcess || "Please visit the original source to apply",
-        what_you_get: result.data.benefits || "Please check the original source for benefits",
-        category: result.data.category || "Scholarship",
-        location: result.data.location || "Various",
-        funding_type: result.data.fundingType || "Full Funding",
-        amounts: result.data.amounts || { type: "full", value: "TBD" },
-        eligible_countries: result.data.eligibleCountries || ["Global"],
-        tags: result.data.tags || [],
-        application_deadline: result.data.deadline ? new Date(result.data.deadline).toISOString() : null,
-        application_url: result.data.applicationUrl || sourceUrl,
+        how_to_apply: result.data.howToApply || "Please visit the original source to apply",
+        what_you_get: result.data.whatYouGet || "Please check the original source for benefits",
+        category: result.data.category || "Misc",
+        location: result.data.location || "Global",
+        funding_type: normalizeFundingType(result.data.fundingType || result.data.funding_type || "Variable Amount"),
+        amounts: formatAmountsField(result.data),
+        eligible_countries: formatArrayField(result.data.eligibleCountries || "Global"),
+        tags: formatArrayField(result.data.tags || ""),
+        application_deadline: formatDateField(result.data.deadline),
+        program_start_date: formatDateField(result.data.programStartDate),
+        program_end_date: formatDateField(result.data.programEndDate),
+        application_url: result.data.url || sourceUrl,
         website_url: sourceUrl,
         contact_email: result.data.contactEmail || null,
         contact_phone: result.data.contactPhone || null,
+        eligibility_age: result.data.eligibilityAge || null,
+        language_requirements: result.data.languageRequirements || null,
         featured: false,
         status: "active",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }
+
+      console.log("[v0] Formatted opportunity data:", JSON.stringify(opportunityData, null, 2))
 
       const { data: opportunityResult, error: opportunityError } = await supabase
         .from("opportunities")

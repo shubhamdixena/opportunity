@@ -317,6 +317,19 @@ export class ScrapingService {
 
               if (!contentResult.contentText || contentResult.contentText.length < 100) {
                 console.log("Skipping entry with insufficient content:", contentResult.title)
+
+                // Delete any existing entry with this URL that has insufficient content
+                try {
+                  await supabase
+                    .from("scraped_opportunities")
+                    .delete()
+                    .eq("post_url", postUrl)
+                    .or("details.is.null,details.eq.")
+                  console.log("Deleted entry with insufficient content:", postUrl)
+                } catch (deleteError) {
+                  console.error("Error deleting insufficient content entry:", deleteError)
+                }
+
                 totalSkipped++
                 continue
               }
@@ -333,7 +346,7 @@ export class ScrapingService {
                 tags: contentResult.tags || [],
                 category: "Scholarship", // Default category
                 scraped_at: new Date().toISOString(),
-                processing_status: "raw" as const, // Start as raw for automatic processing
+                processing_status: "raw" as const,
                 ai_confidence_score: 0,
               }
 
@@ -362,6 +375,8 @@ export class ScrapingService {
                 results.push(savedData[0])
 
                 try {
+                  console.log("Starting automatic AI processing for:", savedData[0].name)
+
                   const processResponse = await fetch("/api/scraped-content/process-ai", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -374,9 +389,12 @@ export class ScrapingService {
                   })
 
                   if (processResponse.ok) {
-                    console.log("Successfully triggered AI processing for:", savedData[0].name)
+                    const processResult = await processResponse.json()
+                    console.log("Successfully processed and posted opportunity:", savedData[0].name)
+                    console.log("Process result:", processResult)
                   } else {
-                    console.error("Failed to trigger AI processing for:", savedData[0].name)
+                    const errorText = await processResponse.text()
+                    console.error("Failed to process opportunity:", savedData[0].name, errorText)
                   }
                 } catch (processError) {
                   console.error("Failed to trigger AI processing:", processError)
@@ -406,11 +424,11 @@ export class ScrapingService {
       }
 
       const message = hasResults
-        ? `Successfully scraped ${results.length} new opportunities (${totalSkipped} duplicates skipped, ${totalErrors} errors) from ${urlsToScrape.length} sources`
-        : `Processed ${totalProcessed} URLs but found no new opportunities (${totalSkipped} duplicates, ${totalErrors} errors)`
+        ? `Successfully scraped and auto-posted ${results.length} new opportunities (${totalSkipped} duplicates/insufficient content skipped, ${totalErrors} errors) from ${urlsToScrape.length} sources`
+        : `Processed ${totalProcessed} URLs but found no new opportunities (${totalSkipped} duplicates/insufficient content, ${totalErrors} errors)`
 
       return {
-        success: hasResults || totalSkipped > 0, // Consider successful if we found new or existing opportunities
+        success: hasResults || totalSkipped > 0,
         totalOpportunities: results.length,
         sourcesProcessed: urlsToScrape.length,
         results: results,
